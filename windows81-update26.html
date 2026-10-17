@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Windows 8.1 Update 26</title>
+  <style>
+    :root{
+      --accent:#0078D7;
+      --start-bg:#1E1E2E;
+      --text:#fff;
+      --taskbar-h:42px;
+      --ui-scale:1;
+    }
+    *{box-sizing:border-box;user-select:none}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#000;color:#fff;transform:scale(var(--ui-scale));transform-origin:top left}
+    input,textarea,button,select{font-family:inherit}
+    .hidden{display:none !important}
+    .screen{position:fixed;inset:0}
+    .center{display:flex;align-items:center;justify-content:center}
+    .mono{font-family:Consolas,monospace}
+    .panel{background:rgba(30,30,40,.92);border:1px solid rgba(255,255,255,.2)}
+
+    /* BOOT */
+    #bios{background:#000;color:#fff;padding:28px}
+    #bios pre{font-size:18px;line-height:1.4}
+    #bootLogo{background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+    .winlogo{width:120px;height:120px;display:grid;grid-template-columns:1fr 1fr;gap:8px;transform:skewY(-6deg)}
+    .winlogo span{background:#00ADEF}
+    .spinner{width:60px;height:60px;position:relative}
+    .spinner i{position:absolute;left:50%;top:50%;width:8px;height:8px;background:#fff;border-radius:50%;transform-origin:0 -24px;animation:spin 1.2s linear infinite}
+    .spinner i:nth-child(1){animation-delay:0s}
+    .spinner i:nth-child(2){animation-delay:.15s}
+    .spinner i:nth-child(3){animation-delay:.3s}
+    .spinner i:nth-child(4){animation-delay:.45s}
+    .spinner i:nth-child(5){animation-delay:.6s}
+    .spinner i:nth-child(6){animation-delay:.75s}
+    @keyframes spin{0%{transform:rotate(0deg) translateY(-24px);opacity:1}100%{transform:rotate(360deg) translateY(-24px);opacity:.2}}
+
+    /* LOCK+LOGIN */
+    #lockScreen{background:linear-gradient(135deg,#0f1a44,#302060,#4a2f7f);display:flex;flex-direction:column;justify-content:space-between;padding:50px}
+    #lockTop{font-size:86px;font-weight:300}
+    #lockDate{font-size:28px;opacity:.9}
+    #lockBottom{display:flex;justify-content:space-between;align-items:center}
+    #lockTips{opacity:.8}
+    .dragHint{font-size:14px;opacity:.7}
+    #login{background:linear-gradient(140deg,#101b44,#2f216d);display:flex;align-items:center;justify-content:center}
+    #loginCard{width:360px;padding:26px;text-align:center}
+    .avatar{width:96px;height:96px;margin:0 auto;border-radius:50%;background:radial-gradient(circle at 50% 35%,#ddd 18px,#999 18px,#999 36px,#666 37px);border:3px solid #fff}
+    #loginName{margin:12px 0 16px;font-size:30px;font-weight:300}
+    #pwd{width:100%;padding:10px;border:1px solid #fff;background:rgba(0,0,0,.35);color:#fff}
+    #loginBtn{margin-top:10px;width:100%;padding:10px;background:var(--accent);border:0;color:#fff;cursor:pointer}
+    #preparing{margin-top:12px;font-size:14px;opacity:.8}
+
+    /* START */
+    #startScreen{background:var(--start-bg);overflow:auto;padding:30px;background-image:linear-gradient(45deg,rgba(255,255,255,.04) 25%,transparent 25%),linear-gradient(-45deg,rgba(255,255,255,.04) 25%,transparent 25%),linear-gradient(45deg,transparent 75%,rgba(255,255,255,.04) 75%),linear-gradient(-45deg,transparent 75%,rgba(255,255,255,.04) 75%);background-size:40px 40px;background-position:0 0,0 20px,20px -20px,-20px 0}
+    #startTop{display:flex;justify-content:space-between;align-items:flex-start}
+    #startTitle{font-size:72px;font-weight:300}
+    #startTopRight{display:flex;gap:10px;align-items:center}
+    .topBtn{width:34px;height:34px;border:1px solid rgba(255,255,255,.3);display:grid;place-items:center;cursor:pointer}
+    .icon{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
+    .icon svg{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .icon.fill svg .f{fill:currentColor;stroke:none}
+    .tileGroups{display:flex;gap:34px;min-width:1200px;padding-bottom:40px}
+    .group h3{font-weight:300}
+    .tiles{display:flex;flex-wrap:wrap;gap:10px;width:640px}
+    .tile{position:relative;cursor:grab;transition:.2s;overflow:hidden;padding:10px}
+    .tile:hover{filter:brightness(1.12)}
+    .tile:active{transform:scale(.97)}
+    .small{width:70px;height:70px}
+    .medium{width:150px;height:150px}
+    .wide{width:310px;height:150px}
+    .large{width:310px;height:310px}
+    .tile .title{position:absolute;left:10px;bottom:8px;font-size:15px}
+    .live{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;transition:.5s;text-align:center;padding:10px;line-height:1.2}
+    .flip{transform:rotateY(180deg);opacity:.2}
+    #tileCtx{position:fixed;z-index:9999;background:#2a2a36;border:1px solid #5c5c67;padding:4px;display:none}
+    #tileCtx div{padding:8px 12px;cursor:pointer}
+    #tileCtx div:hover{background:#3c3c48}
+
+    /* DESKTOP */
+    #desktop{background:linear-gradient(130deg,#2f5cbf,#2a9fd6 45%,#6f5cd8);padding-bottom:var(--taskbar-h)}
+    #desktopIcons{padding:18px;display:flex;flex-direction:column;gap:16px;width:100px}
+    .dicon{width:84px;text-align:center;cursor:pointer}
+    .dicon .icon{font-size:30px}
+    .dicon span{font-size:12px;background:rgba(0,0,0,.25);padding:2px 4px}
+    #taskbar{position:absolute;left:0;right:0;bottom:0;height:var(--taskbar-h);background:rgba(28,28,28,.92);display:flex;align-items:center}
+    #startBtn{width:46px;height:100%;display:grid;place-items:center;border-right:1px solid rgba(255,255,255,.1);cursor:pointer}
+    #taskSearch{width:220px;height:30px;background:#111;border:1px solid #444;color:#fff;margin:0 6px;padding:0 8px}
+    #pinned,#tasks{display:flex;height:100%;align-items:center;gap:2px}
+    .tb-btn{height:100%;padding:0 12px;display:flex;align-items:center;cursor:pointer;gap:8px}
+    .tb-btn.active{background:rgba(255,255,255,.2)}
+    #tray{margin-left:auto;display:flex;height:100%;align-items:center}
+    .tray-btn{padding:0 8px;height:100%;display:flex;align-items:center;cursor:pointer;font-size:13px}
+    #showDesktop{width:8px;background:rgba(255,255,255,.22);height:100%;cursor:pointer}
+    #actionCenter{position:fixed;right:-360px;top:0;bottom:0;width:360px;background:#1b1b26;transition:.25s;padding:14px;z-index:2000}
+    #actionCenter.open{right:0}
+    .quickGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+    .quickGrid button{padding:10px;background:#2f2f40;color:#fff;border:1px solid #505068}
+
+    /* WINDOWS */
+    #windowLayer{position:absolute;inset:0;pointer-events:none}
+    .window{position:absolute;background:#f4f4f4;color:#111;border:1px solid #999;min-width:320px;min-height:220px;pointer-events:auto;animation:wIn .18s}
+    .window.active{border-color:var(--accent)}
+    @keyframes wIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+    .titlebar{height:32px;background:#e9e9ee;display:flex;align-items:center;justify-content:space-between;padding-left:10px;cursor:move}
+    .wtitle{font-size:13px}
+    .wctl{display:flex;height:100%}
+    .wctl button{width:40px;border:0;background:transparent;cursor:pointer}
+    .wctl button:hover{background:#ddd}
+    .wctl .close:hover{background:#e81123;color:#fff}
+    .content{height:calc(100% - 32px);overflow:auto;background:#fff}
+    .resize-handle{position:absolute;width:10px;height:10px;right:0;bottom:0;cursor:nwse-resize;background:transparent}
+    .app-toolbar{background:#f0f0f6;padding:8px;border-bottom:1px solid #d2d2dc;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .app-toolbar button,.app-toolbar select,.app-toolbar input{padding:6px 8px;border:1px solid #bbb;background:#fff}
+
+    /* APPS */
+    .fs-layout{display:grid;grid-template-columns:180px 1fr;height:100%}
+    .fs-left{background:#f5f7fc;border-right:1px solid #d5d8e1;padding:6px}
+    .fs-left .item{padding:6px;cursor:pointer}
+    .fs-left .item:hover{background:#e8eef9}
+    .fs-main{display:flex;flex-direction:column;height:100%}
+    .crumbs{padding:8px;border-bottom:1px solid #ddd}
+    .fs-grid{padding:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+    .fitem{border:1px solid #ddd;padding:8px;cursor:pointer}
+    .fitem:hover{background:#f5f7ff}
+    .notepad-area{width:100%;height:calc(100% - 80px);border:0;outline:none;padding:10px;font-family:Consolas,monospace;resize:none}
+    .status{height:28px;border-top:1px solid #ddd;background:#f4f4f8;padding:4px 10px;font-size:12px}
+    .calc-wrap{display:flex;height:100%}
+    .calc-main{flex:1;padding:10px}
+    .calc-display{height:56px;background:#0f0f17;color:#fff;font-size:30px;padding:8px;text-align:right}
+    .calc-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}
+    .calc-grid button{padding:12px;font-size:16px;border:1px solid #bbb;background:#f6f6f9;cursor:pointer}
+    .calc-history{width:180px;border-left:1px solid #ddd;padding:10px;overflow:auto}
+    .cmd{background:#000;color:#8cff8c;height:100%;font-family:Consolas,monospace;padding:8px;display:flex;flex-direction:column}
+    .cmd-out{flex:1;overflow:auto;white-space:pre-wrap}
+    .cmd-line{display:flex}
+    .cmd-line input{flex:1;background:#000;color:#8cff8c;border:0;outline:none}
+    .mail-layout{display:grid;grid-template-columns:170px 260px 1fr;height:100%}
+    .mail-folders,.mail-list{border-right:1px solid #ddd;overflow:auto}
+    .mail-folders div,.mail-list div{padding:8px;cursor:pointer}
+    .mail-folders div:hover,.mail-list div:hover{background:#f2f8ff}
+    .weather{height:100%;padding:16px;background:linear-gradient(130deg,#1076d8,#46a0f1);color:#fff}
+    .contacts-wrap{display:grid;grid-template-columns:280px 1fr;height:100%}
+    .list{border-right:1px solid #ddd;overflow:auto}
+    .list div{padding:8px;cursor:pointer}
+    .list div:hover{background:#f0f7ff}
+    .news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:12px}
+    .news-card{border:1px solid #ccc;padding:10px;cursor:pointer}
+    .store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;padding:12px}
+    .store-card{border:1px solid #ccc;padding:10px}
+    .photos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;padding:10px}
+    .ph{height:90px;cursor:pointer}
+    .music{display:grid;grid-template-columns:220px 1fr;height:100%}
+    .tracks{border-right:1px solid #ddd;overflow:auto}
+    .tracks div{padding:8px;cursor:pointer}
+    .tracks div:hover{background:#f0f6ff}
+    .vis{height:120px;background:#0d0f24}
+    .calendar{padding:10px}
+    .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+    .cal-cell{border:1px solid #ccc;min-height:70px;padding:4px;cursor:pointer}
+    .paint-tools{display:flex;gap:6px;padding:6px;border-bottom:1px solid #ccc}
+    .taskmgr{display:grid;grid-template-columns:1fr 1fr;height:100%}
+    .tm-list{border-right:1px solid #ddd;padding:10px}
+    .tm-graph{padding:10px}
+    .ai-chat{height:100%;display:flex;flex-direction:column;background:linear-gradient(130deg,#372d7a,#703cb5)}
+    .chat-log{flex:1;overflow:auto;padding:10px}
+    .msg{padding:8px 10px;border-radius:10px;max-width:80%;margin:6px 0}
+    .u{background:#2f79dd;margin-left:auto}
+    .b{background:#57608c}
+    .chat-send{display:flex;padding:8px;gap:8px}
+    .chat-send input{flex:1;padding:8px}
+    .writer{display:flex;flex-direction:column;height:100%}
+    .writer textarea{flex:1;border:0;outline:none;padding:10px}
+    .art{padding:10px;height:100%;display:flex;flex-direction:column;gap:8px}
+    #charms{position:fixed;right:-120px;top:0;bottom:0;width:110px;background:#111;display:flex;flex-direction:column;justify-content:center;gap:10px;transition:.2s;z-index:1900}
+    #charms.open{right:0}
+    #charms button{height:42px;background:#2a2a2a;color:#fff;border:1px solid #4a4a4a;cursor:pointer}
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:3000;display:flex;align-items:center;justify-content:center}
+    .dialog{background:#fff;color:#000;width:360px;padding:14px;border:1px solid #666}
+    .game-canvas{background:#d7f0ff;display:block;margin:0 auto}
+    .mn-cell{width:24px;height:24px;border:1px solid #777;display:grid;place-items:center;background:#c0c0c0;font-weight:700;cursor:pointer}
+  </style>
+</head>
+<body>
+  <div id="bios" class="screen mono">
+    <pre id="biosText"></pre>
+  </div>
+
+  <div id="bootLogo" class="screen hidden">
+    <div class="winlogo"><span></span><span></span><span></span><span></span></div>
+    <div class="spinner"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div>Windows 8.1 Update 26</div>
+  </div>
+
+  <div id="lockScreen" class="screen hidden">
+    <div>
+      <div id="lockTop">00:00</div>
+      <div id="lockDate"></div>
+    </div>
+    <div id="lockBottom">
+      <div><span class="icon" id="lockBattery"></span> 86%  <span class="icon" id="lockWifi"></span> Wi‑Fi  <span class="icon" id="lockMail"></span> 3</div>
+      <div class="dragHint">Проведите вверх или потяните мышью вверх</div>
+    </div>
+  </div>
+
+  <div id="login" class="screen hidden center">
+    <div id="loginCard" class="panel">
+      <div class="avatar"></div>
+      <div id="loginName">User</div>
+      <input id="pwd" type="password" placeholder="Пароль" />
+      <button id="loginBtn">Войти →</button>
+      <div id="preparing" class="hidden">Подготовка рабочего стола...</div>
+    </div>
+  </div>
+
+  <div id="startScreen" class="screen hidden">
+    <div id="startTop">
+      <div id="startTitle">Start</div>
+      <div id="startTopRight">
+        <div id="startUser" style="margin-right:10px"></div>
+        <div class="topBtn" id="startSearchBtn"></div>
+        <div class="topBtn" id="startPowerBtn"></div>
+      </div>
+    </div>
+    <div class="tileGroups" id="tileGroups"></div>
+  </div>
+
+  <div id="desktop" class="screen hidden">
+    <div id="desktopIcons"></div>
+    <div id="windowLayer"></div>
+    <div id="taskbar">
+      <div id="startBtn"></div>
+      <input id="taskSearch" placeholder="AI-поиск в системе" />
+      <div id="pinned"></div>
+      <div id="tasks"></div>
+      <div id="tray">
+        <div class="tray-btn" id="volBtn"></div>
+        <div class="tray-btn" id="wifiBtn"></div>
+        <div class="tray-btn" id="batteryBtn"></div>
+        <div class="tray-btn" id="langBtn">RU</div>
+        <div class="tray-btn" id="clockBtn"></div>
+        <div class="tray-btn" id="notifBtn"></div>
+      </div>
+      <div id="showDesktop"></div>
+    </div>
+  </div>
+
+  <div id="charms">
+    <button data-charm="search"></button>
+    <button data-charm="share"></button>
+    <button data-charm="start"></button>
+    <button data-charm="devices"></button>
+    <button data-charm="settings"></button>
+  </div>
+  <div id="actionCenter">
+    <h3 style="font-weight:300;margin:0 0 8px">Центр уведомлений</h3>
+    <div class="quickGrid">
+      <button data-act="wifi">Wi‑Fi</button><button data-act="bt">Bluetooth</button>
+      <button data-act="tablet">Режим планшета</button><button data-act="bright">Яркость</button>
+      <button data-act="focus">Не беспокоить</button><button data-act="night">Ночной свет</button>
+    </div>
+    <div id="notifs"></div>
+  </div>
+  <div id="tileCtx"></div>
+  <div id="modalRoot"></div>
+
+  <script>
+    const $ = s => document.querySelector(s);
+    const $$ = s => [...document.querySelectorAll(s)];
+    const state = {
+      screen:'boot',lang:'RU',z:10,activeWindow:null,
+      windows:{},tasks:{},notifications:[],
+      settings: JSON.parse(localStorage.getItem('w81_settings')||'null') || {
+        accent:'#0078D7', startBg:'#1E1E2E', desktopBg:0, lockBg:0, userName:'User', volume:70, scale:100
+      },
+      fs: JSON.parse(localStorage.getItem('w81_fs')||'null') || null,
+      mails: JSON.parse(localStorage.getItem('w81_mail')||'null') || null,
+      contacts: JSON.parse(localStorage.getItem('w81_contacts')||'null') || null,
+      calendar: JSON.parse(localStorage.getItem('w81_calendar')||'[]'),
+      notes: JSON.parse(localStorage.getItem('w81_notes')||'{}'),
+      game: JSON.parse(localStorage.getItem('w81_games')||'{}'),
+      processList:[]
+    };
+    const accentColors=['#0078D7','#FF8C00','#E81123','#0099BC','#107C10','#7A7574','#767676','#7E735F','#B146C2','#0063B1','#744DA9','#018574','#10893E','#8E562E','#881798'];
+    const jokes=["Почему программисту холодно? Он забыл закрыть Windows.","Сисадмин не опаздывает, он просто буферизуется.","Калькулятор сказал: я считаю, значит существую.","Шахматист в IT всегда думает на три хода вперед.","Вирус спросил антивирус: ты обновился?"];
+    const facts=["Windows 8.1 вышла в 2013 году.","Клавиша Win впервые появилась в 1994.","Первые HDD в ПК имели объем 10 МБ.","ASCII состоит из 128 базовых символов.","Первый браузер назывался WorldWideWeb."];
+    const dict={hello:'привет',world:'мир',computer:'компьютер',sun:'солнце',water:'вода',friend:'друг',window:'окно'};
+    const appIconMap={mail:'mail',calendar:'calendar',contacts:'user',weather:'weather',news:'news',photos:'photo',music:'music',video:'video',store:'store',desktop:'desktop',calc:'calc',notepad:'note',settings:'settings',explorer:'folder',paint:'brush',cmd:'terminal',taskmgr:'chart',cortana:'cortana',writer:'pen',art:'palette',shark:'gamepad',solitaire:'cards',mines:'bomb',chess:'chess',fifteen:'grid',snake:'snake',piano:'piano',radio:'radio',rec:'mic',browser:'browser'};
+    function iconSVG(name,size=18,filled=false){
+      const p={
+        search:'<circle cx="8.5" cy="8.5" r="5.5"></circle><path d="M13 13l4 4"></path>',
+        power:'<path d="M9 2v6"></path><path d="M4.2 4.2a7 7 0 1 0 9.6 0"></path>',
+        windows:'<path d="M2 3l7-1v7H2z"></path><path d="M10 2l8-1v8h-8z"></path><path d="M2 11h7v7l-7-1z"></path><path d="M10 11h8v8l-8-1z"></path>',
+        volume:'<path d="M2 8h3l4-3v10l-4-3H2z"></path><path d="M12 7c2 2 2 4 0 6"></path><path d="M14.5 5c3 3 3 7 0 10"></path>',
+        wifi:'<path d="M2 8a11 11 0 0 1 16 0"></path><path d="M5 11a7 7 0 0 1 10 0"></path><path d="M8 14a3 3 0 0 1 4 0"></path><circle class="f" cx="10" cy="17" r="1.3"></circle>',
+        battery:'<rect x="2" y="6" width="14" height="8" rx="1.5"></rect><path d="M16 8h2v4h-2"></path><rect class="f" x="4" y="8" width="8" height="4"></rect>',
+        bell:'<path d="M4 13h12l-1-2v-3a5 5 0 0 0-10 0v3z"></path><path d="M8 15a2 2 0 0 0 4 0"></path>',
+        share:'<circle cx="5" cy="10" r="2"></circle><circle cx="14" cy="5" r="2"></circle><circle cx="14" cy="15" r="2"></circle><path d="M7 9l5-3"></path><path d="M7 11l5 3"></path>',
+        home:'<path d="M3 10l7-6 7 6"></path><path d="M5 9v8h10V9"></path>',
+        devices:'<rect x="2" y="4" width="10" height="8" rx="1.2"></rect><rect x="14" y="6" width="4" height="10" rx="1"></rect><path d="M5 14h4"></path>',
+        settings:'<circle cx="10" cy="10" r="2.5"></circle><path d="M10 3v2M10 15v2M3 10h2M15 10h2M5 5l1.5 1.5M13.5 13.5L15 15M5 15l1.5-1.5M13.5 6.5L15 5"></path>',
+        mail:'<rect x="2" y="4" width="16" height="12" rx="1.6"></rect><path d="M3 6l7 5 7-5"></path>',
+        calendar:'<rect x="3" y="4" width="14" height="13" rx="1.4"></rect><path d="M3 8h14M7 2v4M13 2v4"></path><rect class="f" x="7" y="10" width="3" height="3"></rect>',
+        user:'<circle cx="10" cy="7" r="3"></circle><path d="M3 17c1.6-3 4-4 7-4s5.4 1 7 4"></path>',
+        weather:'<path d="M6 15h8a3 3 0 0 0 0-6 4.5 4.5 0 0 0-8.3-1.8A3.2 3.2 0 0 0 6 15z"></path>',
+        news:'<rect x="2" y="4" width="16" height="12" rx="1.2"></rect><path d="M5 8h6M5 11h8M5 14h5"></path><rect x="12.5" y="8" width="3" height="3"></rect>',
+        photo:'<rect x="2" y="4" width="16" height="12" rx="1.4"></rect><circle cx="7" cy="8" r="1.3"></circle><path d="M4 14l4-3 3 2 3-4 2 5"></path>',
+        music:'<path d="M12 4v8a2 2 0 1 1-1-1.7V5l6-1v7a2 2 0 1 1-1-1.7V3z"></path>',
+        video:'<rect x="2" y="5" width="12" height="10" rx="1.4"></rect><path d="M14 8l4-2v8l-4-2z"></path>',
+        store:'<path d="M4 7h12l-1 9H5z"></path><path d="M7 7V5a3 3 0 0 1 6 0v2"></path>',
+        desktop:'<rect x="2" y="4" width="16" height="10" rx="1.3"></rect><path d="M7 17h6M10 14v3"></path>',
+        calc:'<rect x="4" y="2.5" width="12" height="15" rx="1.5"></rect><path d="M6.5 6.5h7"></path><path d="M7 10h1M10 10h1M13 10h1M7 13h1M10 13h1M13 13h1"></path>',
+        note:'<path d="M5 2h8l3 3v13H5z"></path><path d="M13 2v4h4M7 9h7M7 12h7"></path>',
+        folder:'<path d="M2 6h6l2 2h8v8H2z"></path>',
+        brush:'<path d="M13 3l4 4-7 7-4-4z"></path><path d="M4 16c0-1.5 1-2.5 2.5-2.5H9v2.5c0 1.1-.9 2-2 2H4z"></path>',
+        terminal:'<rect x="2" y="4" width="16" height="12" rx="1.4"></rect><path d="M5 8l3 2-3 2M10 12h4"></path>',
+        chart:'<rect x="2" y="3" width="16" height="14" rx="1.4"></rect><path d="M5 13V9M9 13V6M13 13v-4"></path>',
+        cortana:'<circle cx="10" cy="10" r="6"></circle><circle cx="10" cy="10" r="2.3"></circle>',
+        pen:'<path d="M3 14l1 3 3-1 8-8-3-3z"></path><path d="M11 4l3 3"></path>',
+        palette:'<path d="M10 3a7 7 0 1 0 0 14h1a2 2 0 0 0 0-4h-1a2 2 0 1 1 0-4 4 4 0 0 0 0-8z"></path>',
+        gamepad:'<path d="M5 13h10a3 3 0 0 0 2.6-4.5l-1.3-2A3 3 0 0 0 13.7 5H6.3A3 3 0 0 0 3.7 6.5l-1.3 2A3 3 0 0 0 5 13z"></path><path d="M7 9h2M8 8v2M13 9h.01M15 10h.01"></path>',
+        cards:'<rect x="4" y="5" width="10" height="12" rx="1"></rect><rect x="7" y="3" width="10" height="12" rx="1"></rect>',
+        bomb:'<circle cx="9" cy="11" r="4"></circle><path d="M9 7l1-2 3 1"></path>',
+        chess:'<path d="M7 17h6M8 15h4l1-5H7z"></path><path d="M8 6h4l-1 3H9z"></path><circle cx="10" cy="4" r="1.5"></circle>',
+        grid:'<rect x="3" y="3" width="14" height="14" rx="1"></rect><path d="M8 3v14M13 3v14M3 8h14M3 13h14"></path>',
+        snake:'<path d="M4 10c1-3 5-4 7-2s3 4 1 6-6 2-7-1 2-3 3-2"></path><circle class="f" cx="12.8" cy="8.2" r=".8"></circle>',
+        piano:'<rect x="2" y="3" width="16" height="14" rx="1"></rect><path d="M6 3v14M10 3v14M14 3v14M5 8h2v4H5zM9 8h2v4H9zM13 8h2v4h-2z"></path>',
+        radio:'<rect x="2" y="6" width="16" height="10" rx="1.2"></rect><path d="M6 6l4-3M5 10h6"></path><circle cx="14" cy="11" r="2"></circle>',
+        mic:'<rect x="7" y="3" width="6" height="9" rx="3"></rect><path d="M5 9a5 5 0 0 0 10 0M10 14v3M7 17h6"></path>',
+        browser:'<circle cx="10" cy="10" r="8"></circle><path d="M2 10h16M10 2a14 14 0 0 1 0 16M10 2a14 14 0 0 0 0 16"></path>'
+      };
+      return `<span class="icon${filled?' fill':''}" style="font-size:${size}px">${`<svg viewBox="0 0 20 20">${p[name]||p.grid}</svg>`}</span>`;
+    }
+
+    function saveAll(){
+      localStorage.setItem('w81_settings',JSON.stringify(state.settings));
+      localStorage.setItem('w81_fs',JSON.stringify(state.fs));
+      localStorage.setItem('w81_mail',JSON.stringify(state.mails));
+      localStorage.setItem('w81_contacts',JSON.stringify(state.contacts));
+      localStorage.setItem('w81_calendar',JSON.stringify(state.calendar));
+      localStorage.setItem('w81_notes',JSON.stringify(state.notes));
+      localStorage.setItem('w81_games',JSON.stringify(state.game));
+    }
+    function notify(text){
+      state.notifications.unshift({text,time:new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})});
+      if(state.notifications.length>30) state.notifications.pop();
+      renderNotifs();
+      audio.tone(830,.07,.05,'sine');
+    }
+    function renderNotifs(){ $('#notifs').innerHTML=state.notifications.map(n=>`<div style="padding:8px;border-bottom:1px solid #2d2d3a">${n.time} — ${n.text}</div>`).join('');}
+
+    const audio={
+      ctx:null,
+      ensure(){if(!this.ctx)this.ctx=new (window.AudioContext||window.webkitAudioContext)();},
+      tone(freq=440,d=0.1,v=0.08,type='triangle'){
+        this.ensure();
+        const o=this.ctx.createOscillator(),g=this.ctx.createGain();
+        o.type=type;o.frequency.value=freq;g.gain.value=v;
+        o.connect(g);g.connect(this.ctx.destination);o.start();
+        g.gain.exponentialRampToValueAtTime(0.0001,this.ctx.currentTime+d);
+        o.stop(this.ctx.currentTime+d);
+      },
+      chord(){[440,554,659].forEach((f,i)=>setTimeout(()=>this.tone(f,.35,.06,'sine'),i*60));}
+    };
+
+    function initData(){
+      if(!state.fs){
+        state.fs={type:'dir',name:'C:',children:{
+          Users:{type:'dir',children:{User:{type:'dir',children:{
+            Desktop:{type:'dir',children:{}},
+            Documents:{type:'dir',children:{
+              'Приветствие.txt':{type:'file',ext:'txt',content:'Добро пожаловать в Windows 8.1 Update 26!\nЭто ваш документ.'},
+              'План_дня.txt':{type:'file',ext:'txt',content:'1. Проверить почту\n2. Открыть Календарь\n3. Запустить Shark Dash'}
+            }},
+            Pictures:{type:'dir',children:{'Абстракция.txt':{type:'file',ext:'txt',content:'Коллекция изображений хранится в приложении Фото.'}}},
+            Music:{type:'dir',children:{}},Videos:{type:'dir',children:{}},Downloads:{type:'dir',children:{}}
+          }}}},
+          Windows:{type:'dir',children:{System32:{type:'dir',children:{}},Fonts:{type:'dir',children:{}}}},
+          'Program Files':{type:'dir',children:{Games:{type:'dir',children:{}},Apps:{type:'dir',children:{}}}},
+          D:{type:'dir',children:{}}
+        }};
+      }
+      if(!state.mails){
+        const base = [
+          ['Команда Update 26','Релиз системы завершен успешно, проверьте новые приложения.'],
+          ['Погода на неделю','Ожидается переменная облачность и теплый ветер.'],
+          ['Новая акция в Store','Скидка 40% на игры и утилиты до воскресенья.'],
+          ['Напоминание','Созвон с коллегами в 15:00.'],
+          ['Шахматный клуб','Турнир стартует завтра в 19:00.'],
+          ['Курсы по JS','Открылся новый курс по Canvas и Web Audio.'],
+          ['Новости науки','Найден новый экзопланетный объект.'],
+          ['Командная строка','Совет дня: используйте help для списка команд.'],
+          ['Календарь','Добавьте событие на выходные.'],
+          ['Cortana AI+','Попробуйте команду "Расскажи факт".'],
+          ['Безопасность','Регулярно обновляйте систему.']
+        ];
+        state.mails={inbox:base.map((m,i)=>({id:'m'+i,from:'system@update26.local',subject:m[0],date:new Date(Date.now()-i*86400000).toLocaleDateString('ru-RU'),body:m[1]})),sent:[],drafts:[],spam:[],trash:[]};
+      }
+      if(!state.contacts){
+        const names=['Иван','Мария','Алексей','София','Олег','Нина','Павел','Кира','Роман','Виктор','Елена','Артём','Людмила','Денис','Оксана','Юрий','Вера','Егор','Леонид','Татьяна','Максим','Ирина'];
+        state.contacts=names.map((n,i)=>({name:n+' '+String.fromCharCode(1040+(i%32))+'.',phone:'+7-900-'+(1000000+i),email:`${n.toLowerCase()}${i}@mail.local`}));
+      }
+      saveAll();
+    }
+
+    function setScreen(id){
+      ['#bios','#bootLogo','#lockScreen','#login','#startScreen','#desktop'].forEach(s=>$(s).classList.add('hidden'));
+      $(id).classList.remove('hidden');
+      state.screen=id;
+    }
+    function updateClock(){
+      const d=new Date();
+      $('#lockTop').textContent=d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+      $('#lockDate').textContent=d.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
+      $('#clockBtn').textContent=d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+    }
+    setInterval(updateClock,1000); updateClock();
+
+    async function boot(){
+      const bios = [
+        'Windows 8.1 Update 26 BIOS v3.26',
+        'CPU: Intel(R) Core(TM) i9-13980HX @ 2.20GHz',
+        'RAM: 16384 MB OK',
+        'GPU: Metro Display Adapter 2.6',
+        'Storage: Virtual SSD 512GB',
+        'Keyboard: 101/102-Key detected',
+        'Press DEL to enter Setup...',
+        'Initializing boot devices... done',
+        'Loading Update 26 kernel...'
+      ];
+      $('#biosText').textContent=bios.join('\n');
+      setScreen('#bios'); await wait(1500);
+      setScreen('#bootLogo'); await wait(3000);
+      setScreen('#lockScreen');
+      audio.chord();
+    }
+    function wait(ms){return new Promise(r=>setTimeout(r,ms))}
+
+    let lockDragY=null;
+    $('#lockScreen').addEventListener('pointerdown',e=>lockDragY=e.clientY);
+    $('#lockScreen').addEventListener('pointerup',e=>{
+      if(lockDragY!==null && lockDragY-e.clientY>60){setScreen('#login')}
+      lockDragY=null;
+    });
+    $('#loginBtn').onclick=async()=>{
+      $('#preparing').classList.remove('hidden');
+      await wait(1200);
+      $('#startUser').textContent=state.settings.userName;
+      renderStart();
+      setScreen('#startScreen');
+      $('#preparing').classList.add('hidden');
+    };
+    $('#pwd').addEventListener('keydown',e=>{if(e.key==='Enter')$('#loginBtn').click();});
+
+    const tileData = [
+      ['Основное',[
+        ['mail','Почта','wide','#0078D7'],
+        ['calendar','Календарь','medium','#7e57c2'],
+        ['contacts','Контакты','medium','#107C10'],
+        ['weather','Погода','wide','#0063B1'],
+        ['news','Новости','wide','#B91D1D'],
+        ['photos','Фото','medium','#666'],
+        ['music','Музыка','medium','#d2691e'],
+        ['video','Видео','medium','#103a75'],
+        ['store','Магазин','medium','#107C10'],
+        ['desktop','Рабочий стол','medium','#2f5cbf']
+      ]],
+      ['Инструменты',[
+        ['calc','Калькулятор','medium','#6b4ab5'],
+        ['notepad','Блокнот','medium','#0078D7'],
+        ['settings','Параметры','medium','#636363'],
+        ['explorer','Файловый менеджер','wide','#8e6a2e'],
+        ['paint','Paint','medium','#b146c2'],
+        ['cmd','CMD','small','#111'],
+        ['taskmgr','Диспетчер задач','medium','#0f5a36']
+      ]],
+      ['AI & Новое',[
+        ['cortana','Cortana AI+','wide','#6b2ca6'],
+        ['writer','AI Writer','medium','#3267d6'],
+        ['art','AI Art Studio','medium','#b146c2']
+      ]],
+      ['Игры',[
+        ['shark','Shark Dash','wide','#0e95c2'],
+        ['solitaire','Солитер','medium','#107c10'],
+        ['mines','Сапёр','medium','#757575'],
+        ['chess','Шахматы','medium','#8e562e'],
+        ['fifteen','Пятнашки','medium','#ff8c00'],
+        ['snake','Змейка','medium','#10893E']
+      ]],
+      ['Мультимедиа',[
+        ['piano','Пианино','wide','#111'],
+        ['radio','Радио','medium','#d06d25'],
+        ['rec','Диктофон','medium','#e81123']
+      ]]
+    ];
+
+    function renderStart(){
+      document.documentElement.style.setProperty('--accent',state.settings.accent);
+      document.documentElement.style.setProperty('--start-bg',state.settings.startBg);
+      document.documentElement.style.setProperty('--ui-scale',String(state.settings.scale/100));
+      $('#startTitle').textContent='Start';
+      $('#startUser').textContent=state.settings.userName;
+      const root=$('#tileGroups'); root.innerHTML='';
+      tileData.forEach(([g,tiles])=>{
+        const group=document.createElement('div'); group.className='group';
+        group.innerHTML=`<h3>${g}</h3><div class="tiles"></div>`;
+        const tbox=group.querySelector('.tiles');
+        tiles.forEach(([id,title,size,color])=>{
+          const t=document.createElement('div');
+          t.className=`tile ${size}`; t.style.background=color; t.dataset.app=id;
+          t.innerHTML=`<div class="live">${iconSVG(appIconMap[id]||'grid',34)}<div style="margin-top:6px">${title}</div></div><div class="title">${title}</div>`;
+          t.onclick=()=>openFromTile(id);
+          t.oncontextmenu=(e)=>tileContext(e,t,id);
+          t.draggable=true;
+          t.addEventListener('dragstart',ev=>ev.dataTransfer.setData('text/plain',id));
+          tbox.appendChild(t);
+        });
+        tbox.ondragover=e=>e.preventDefault();
+        tbox.ondrop=e=>{
+          e.preventDefault();
+          const id=e.dataTransfer.getData('text/plain');
+          const moving=[...root.querySelectorAll('.tile')].find(x=>x.dataset.app===id);
+          if(moving) tbox.appendChild(moving);
+        };
+        root.appendChild(group);
+      });
+    }
+    function tileContext(e,t,id){
+      e.preventDefault();
+      const m=$('#tileCtx');
+      m.style.left=e.clientX+'px';m.style.top=e.clientY+'px';m.style.display='block';
+      m.innerHTML='';
+      [['Открепить',()=>t.remove()],['Изменить размер',()=>{
+        const order=['small','medium','wide','large']; const c=order.findIndex(s=>t.classList.contains(s));
+        t.classList.remove(...order); t.classList.add(order[(c+1)%4]);
+      }],['Удалить',()=>t.remove()],['Открыть',()=>openFromTile(id)]].forEach(([name,fn])=>{
+        const d=document.createElement('div'); d.textContent=name; d.onclick=()=>{fn();m.style.display='none'}; m.appendChild(d);
+      });
+    }
+    document.addEventListener('click',()=>$('#tileCtx').style.display='none');
+    setInterval(()=>{
+      $$('.tile .live').forEach(el=>{el.classList.add('flip');setTimeout(()=>el.classList.remove('flip'),600)});
+      const c = state.calendar.filter(x=>x.date===new Date().toLocaleDateString('ru-RU')).length;
+      $$('.tile[data-app="calendar"] .live').forEach(x=>x.innerHTML=`${iconSVG('calendar',30)}<div style="margin-top:6px">${new Date().getDate()}${c?` • ${c}`:''}</div>`);
+      $$('.tile[data-app="weather"] .live').forEach(x=>x.innerHTML=`${iconSVG('weather',30)}<div style="margin-top:6px">${['+23°','+16°','+21°','-2°'][Math.floor(Math.random()*4)]}</div>`);
+      $$('.tile[data-app="mail"] .live').forEach(x=>x.innerHTML=`${iconSVG('mail',30)}<div style="margin-top:6px">${(state.mails.inbox[0]?.subject||'Нет новых писем').slice(0,26)}</div>`);
+    },6200);
+
+    function openFromTile(id){
+      audio.tone(580,.05,.05,'square');
+      if(id==='desktop'){setScreen('#desktop');return}
+      setScreen('#desktop');
+      openApp(id);
+    }
+
+    const desktopIcons=[
+      ['Этот компьютер','desktop','explorer'],['Корзина','store','explorer'],['Файловый менеджер','folder','explorer'],['Командная строка','terminal','cmd'],['Блокнот','note','notepad'],['Браузер','browser','browser']
+    ];
+    function renderDesktopIcons(){
+      const root=$('#desktopIcons'); root.innerHTML='';
+      desktopIcons.forEach(([n,ico,app])=>{
+        const d=document.createElement('div'); d.className='dicon'; d.innerHTML=`<div>${iconSVG(ico,30)}</div><span>${n}</span>`;
+        d.ondblclick=()=>openApp(app);
+        root.appendChild(d);
+      });
+    }
+    renderDesktopIcons();
+
+    function makeWindow(title,appId,w=760,h=520){
+      const id=appId+'_'+Math.random().toString(36).slice(2,7);
+      const el=document.createElement('div');
+      el.className='window active'; el.style.width=w+'px'; el.style.height=h+'px'; el.style.left=(80+Math.random()*120)+'px'; el.style.top=(70+Math.random()*80)+'px'; el.style.zIndex=++state.z;
+      el.innerHTML=`<div class="titlebar"><div class="wtitle">${iconSVG(appIconMap[appId]||'grid',14)} <span>${title}</span></div><div class="wctl"><button class="min">_</button><button class="max">□</button><button class="close">×</button></div></div><div class="content"></div><div class="resize-handle"></div>`;
+      $('#windowLayer').appendChild(el);
+      state.windows[id]={id,appId,title,el,min:false,max:false,prev:null};
+      state.processList.push({id,title,cpu:0,ram:Math.floor(60+Math.random()*240)});
+      focusWindow(id); attachWindowEvents(id); addTaskButton(id,title);
+      return state.windows[id];
+    }
+    function focusWindow(id){
+      Object.values(state.windows).forEach(w=>w.el.classList.remove('active'));
+      const w=state.windows[id]; if(!w)return;
+      w.el.classList.add('active'); w.el.style.zIndex=++state.z; state.activeWindow=id;
+    }
+    function addTaskButton(id,title){
+      const b=document.createElement('div'); b.className='tb-btn active'; b.innerHTML=`${iconSVG(appIconMap[state.windows[id]?.appId]||'grid',14)} <span>${title}</span>`; b.dataset.id=id;
+      b.onclick=()=>toggleMin(id);
+      $('#tasks').appendChild(b);
+      state.tasks[id]=b;
+    }
+    function toggleMin(id){
+      const w=state.windows[id]; if(!w)return;
+      w.min=!w.min; w.el.style.display=w.min?'none':'block'; if(!w.min)focusWindow(id);
+      state.tasks[id].classList.toggle('active',!w.min);
+    }
+    function closeWindow(id){
+      const w=state.windows[id]; if(!w)return;
+      w.el.remove(); state.tasks[id]?.remove();
+      delete state.tasks[id]; delete state.windows[id];
+      state.processList=state.processList.filter(p=>!p.id.includes(id.split('_')[0]));
+      audio.tone(220,.04,.05,'square');
+    }
+    function attachWindowEvents(id){
+      const w=state.windows[id], el=w.el, tb=el.querySelector('.titlebar');
+      tb.onmousedown=(e)=>{
+        if(e.target.tagName==='BUTTON')return;
+        focusWindow(id); const sx=e.clientX,sy=e.clientY,r=el.getBoundingClientRect();
+        const ox=sx-r.left,oy=sy-r.top;
+        const mm=(ev)=>{if(w.max)return;el.style.left=(ev.clientX-ox)+'px';el.style.top=(ev.clientY-oy)+'px'; snapPreview(ev.clientX,ev.clientY,id);}
+        const up=(ev)=>{document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',up);applySnap(ev.clientX,ev.clientY,id);}
+        document.addEventListener('mousemove',mm);document.addEventListener('mouseup',up);
+      };
+      tb.ondblclick=()=>toggleMax(id);
+      el.querySelector('.close').onclick=()=>closeWindow(id);
+      el.querySelector('.min').onclick=()=>toggleMin(id);
+      el.querySelector('.max').onclick=()=>toggleMax(id);
+      el.onmousedown=()=>focusWindow(id);
+      const rh=el.querySelector('.resize-handle');
+      rh.onmousedown=(e)=>{
+        e.stopPropagation(); const r=el.getBoundingClientRect(); const sx=e.clientX,sy=e.clientY;
+        const mm=(ev)=>{el.style.width=Math.max(320,r.width+ev.clientX-sx)+'px';el.style.height=Math.max(220,r.height+ev.clientY-sy)+'px';};
+        const up=()=>{document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',up)};
+        document.addEventListener('mousemove',mm);document.addEventListener('mouseup',up);
+      };
+    }
+    function toggleMax(id){
+      const w=state.windows[id],el=w.el;
+      if(!w.max){w.prev={l:el.style.left,t:el.style.top,w:el.style.width,h:el.style.height};el.style.left='0';el.style.top='0';el.style.width='100%';el.style.height=`calc(100% - var(--taskbar-h))`;w.max=true;}
+      else{Object.assign(el.style,{left:w.prev.l,top:w.prev.t,width:w.prev.w,height:w.prev.h});w.max=false;}
+    }
+    function snapPreview(){}
+    function applySnap(x,y,id){
+      const w=state.windows[id],el=w.el, ww=window.innerWidth, hh=window.innerHeight-42;
+      if(x<30){Object.assign(el.style,{left:'0px',top:'0px',width:(ww/2)+'px',height:hh+'px'});}
+      else if(x>ww-30){Object.assign(el.style,{left:(ww/2)+'px',top:'0px',width:(ww/2)+'px',height:hh+'px'});}
+    }
+
+    function fsResolve(path){
+      const seg=path.replace(/^C:\\?/i,'').split('\\').filter(Boolean);
+      let n=state.fs;
+      for(const s of seg){ if(!n.children?.[s]) return null; n=n.children[s];}
+      return n;
+    }
+    function fsList(path){const n=fsResolve(path); if(!n||n.type!=='dir')return []; return Object.entries(n.children).map(([k,v])=>({name:k,...v}));}
+    function fsMkdir(path,name){const n=fsResolve(path); if(!n||n.type!=='dir')return false; if(n.children[name])return false; n.children[name]={type:'dir',children:{}}; saveAll(); return true;}
+    function fsWrite(path,file,content){const n=fsResolve(path); if(!n||n.type!=='dir')return false; n.children[file]={type:'file',ext:'txt',content}; saveAll(); return true;}
+    function fsDel(path,name){const n=fsResolve(path); if(!n?.children?.[name]) return false; delete n.children[name]; saveAll(); return true;}
+
+    function openApp(id,args={}){
+      const map={
+        explorer:['Файловый менеджер',appExplorer],notepad:['Блокнот',appNotepad],calc:['Калькулятор',appCalc],paint:['Paint',appPaint],cmd:['Командная строка',appCmd],browser:['Internet Explorer 12',appBrowser],mail:['Почта',appMail],calendar:['Календарь',appCalendar],weather:['Погода',appWeather],music:['Музыка',appMusic],photos:['Фото',appPhotos],settings:['Параметры',appSettings],taskmgr:['Диспетчер задач',appTaskmgr],contacts:['Контакты',appContacts],news:['Новости',appNews],store:['Магазин',appStore],rec:['Диктофон',appRecorder],piano:['Пианино',appPiano],radio:['Радио',appRadio],cortana:['Cortana AI+',appCortana],writer:['AI Writer',appWriter],art:['AI Art Studio',appArt],snake:['Змейка',appSnake],mines:['Сапёр',appMines],fifteen:['Пятнашки',appFifteen],chess:['Шахматы',appChess],solitaire:['Солитер',appSolitaire],shark:['Shark Dash',appShark],video:['Видео',appVideo]
+      };
+      const conf=map[id]; if(!conf)return;
+      const w=makeWindow(conf[0],id,args.w,args.h);
+      conf[1](w,args); audio.tone(330,.06,.05,'triangle');
+    }
+
+    function appExplorer(w){
+      let current='C:\\Users\\User';
+      w.el.querySelector('.content').innerHTML=`<div class="app-toolbar"><button id="bBack">←</button><button id="bUp">↑</button><input id="path" style="width:330px" value="${current}"><button id="mk">Новая папка</button><button id="nf">Новый txt</button><select id="view"><option>Иконки</option><option>Список</option><option>Таблица</option></select></div><div class="fs-layout"><div class="fs-left" id="tree"></div><div class="fs-main"><div class="crumbs" id="crumbs"></div><div class="fs-grid" id="list"></div></div></div>`;
+      const c=w.el.querySelector('.content'), list=c.querySelector('#list'), pathI=c.querySelector('#path');
+      function nav(p){current=p; pathI.value=p; render();}
+      function renderTree(){c.querySelector('#tree').innerHTML=['C:\\','C:\\Users\\User','C:\\Users\\User\\Desktop','C:\\Users\\User\\Documents','C:\\Windows','C:\\Program Files','C:\\D'].map(p=>`<div class="item" data-p="${p}">${p}</div>`).join(''); c.querySelectorAll('.item').forEach(i=>i.onclick=()=>nav(i.dataset.p));}
+      function render(){
+        const arr=fsList(current); c.querySelector('#crumbs').textContent=current;
+        list.innerHTML=arr.map(x=>`<div class="fitem" data-n="${x.name}">${iconSVG(x.type==='dir'?'folder':'note',14)} ${x.name}</div>`).join('');
+        list.querySelectorAll('.fitem').forEach(it=>{
+          it.ondblclick=()=>{
+            const n=it.dataset.n, node=fsResolve(current).children[n];
+            if(node.type==='dir') nav(current+'\\'+n);
+            else if(node.ext==='txt') openApp('notepad',{path:current,file:n,content:node.content});
+          };
+          it.oncontextmenu=(e)=>{
+            e.preventDefault();
+            const m=$('#tileCtx');m.style.display='block';m.style.left=e.clientX+'px';m.style.top=e.clientY+'px';
+            m.innerHTML='<div id="delIt">Удалить</div>';
+            $('#delIt').onclick=()=>{fsDel(current,it.dataset.n);render();m.style.display='none'};
+          };
+        });
+      }
+      c.querySelector('#bUp').onclick=()=>{const p=current.split('\\');p.pop();if(p.length)nav(p.join('\\'));};
+      c.querySelector('#bBack').onclick=()=>nav('C:\\Users\\User');
+      c.querySelector('#mk').onclick=()=>{const n=prompt('Имя папки','Новая папка');if(n){fsMkdir(current,n);render();}};
+      c.querySelector('#nf').onclick=()=>{const n=prompt('Имя файла','Новый документ.txt');if(n){fsWrite(current,n,'');render();}};
+      pathI.onkeydown=e=>{if(e.key==='Enter')nav(pathI.value)};
+      renderTree();render();
+    }
+
+    function appNotepad(w,args){
+      const file = args.file || 'Без имени.txt';
+      const content = args.content || state.notes[file] || '';
+      w.el.querySelector('.content').innerHTML=`<div class="app-toolbar"><button id="nNew">Создать</button><button id="nOpen">Открыть</button><button id="nSave">Сохранить</button><button id="nSaveAs">Сохранить как</button><button id="find">Найти</button><button id="rep">Заменить</button><label><input id="wrap" type="checkbox" checked> Перенос</label></div><textarea class="notepad-area" id="ta">${content.replaceAll('<','&lt;')}</textarea><div class="status" id="st"></div>`;
+      const c=w.el.querySelector('.content'), ta=c.querySelector('#ta');
+      function stat(){const lines=ta.value.split('\n').length;c.querySelector('#st').textContent=`Строк: ${lines} | Символов: ${ta.value.length}`;}
+      ta.oninput=stat; stat();
+      c.querySelector('#nSave').onclick=()=>{state.notes[file]=ta.value;saveAll();notify(`Файл "${file}" сохранен`)};
+      c.querySelector('#nSaveAs').onclick=()=>{const n=prompt('Имя файла',file)||file; state.notes[n]=ta.value; fsWrite('C:\\Users\\User\\Documents',n,ta.value); saveAll(); notify(`Сохранено как ${n}`)};
+      c.querySelector('#nOpen').onclick=()=>openApp('explorer');
+      c.querySelector('#nNew').onclick=()=>ta.value='';
+      c.querySelector('#find').onclick=()=>{const q=prompt('Найти');if(!q)return; const i=ta.value.indexOf(q); if(i>=0){ta.focus();ta.setSelectionRange(i,i+q.length);} else alert('Не найдено');};
+      c.querySelector('#rep').onclick=()=>{const a=prompt('Что заменить?');if(a===null)return;const b=prompt('На что?')||'';ta.value=ta.value.split(a).join(b);stat();};
+      c.querySelector('#wrap').onchange=e=>ta.style.whiteSpace=e.target.checked?'pre-wrap':'pre';
+      ta.addEventListener('keydown',e=>{if(e.ctrlKey&&e.key.toLowerCase()==='h'){e.preventDefault();c.querySelector('#rep').click();}});
+    }
+
+    function appCalc(w){
+      let mode='Обычный', val='0', mem=0, op=null, prev=null, base=10;
+      w.el.querySelector('.content').innerHTML=`<div class="app-toolbar"><select id="mode"><option>Обычный</option><option>Инженерный</option><option>Программист</option></select></div><div class="calc-wrap"><div class="calc-main"><div class="calc-display" id="disp">0</div><div class="calc-grid" id="keys"></div></div><div class="calc-history" id="hist"></div></div>`;
+      const c=w.el.querySelector('.content'), disp=c.querySelector('#disp'), hist=c.querySelector('#hist'), keys=c.querySelector('#keys');
+      const buttons=['MC','MR','M+','M-','C','7','8','9','/','√','4','5','6','*','%','1','2','3','-','±','0','.','=','+','x²'];
+      function renderKeys(){
+        keys.innerHTML=''; let arr=[...buttons];
+        if(mode==='Инженерный') arr.push('sin','cos','tan','log','ln','π','e','!','^','(',')');
+        if(mode==='Программист') arr=['HEX','DEC','OCT','BIN','AND','OR','XOR','NOT','<<','>>','A','B','C','D','E','F',...buttons];
+        arr.forEach(k=>{const b=document.createElement('button'); b.textContent=k; b.onclick=()=>press(k); keys.appendChild(b);});
+      }
+      function upd(){disp.textContent=val;}
+      function press(k){
+        if(['0','1','2','3','4','5','6','7','8','9','.','A','B','C','D','E','F'].includes(k)){ if(val==='0') val=''; val+=k; upd(); return;}
+        if(k==='C'){val='0';op=null;prev=null;upd();return}
+        if(k==='MC')mem=0; if(k==='MR'){val=String(mem);upd();} if(k==='M+')mem+=Number(val)||0; if(k==='M-')mem-=Number(val)||0;
+        if(['+','-','*','/','%','^','AND','OR','XOR','<<','>>'].includes(k)){prev=val;val='0';op=k;return;}
+        if(k==='='){
+          try{
+            let a=parseNum(prev), b=parseNum(val), r=0;
+            if(op==='+')r=a+b; if(op==='-')r=a-b; if(op==='*')r=a*b; if(op==='/')r=a/b; if(op==='%')r=a%b; if(op==='^')r=Math.pow(a,b);
+            if(op==='AND')r=a&b; if(op==='OR')r=a|b; if(op==='XOR')r=a^b; if(op==='<<')r=a<<b; if(op==='>>')r=a>>b;
+            hist.innerHTML=`<div>${prev} ${op} ${val} = ${r}</div>`+hist.innerHTML; val=String(r); upd();
+          }catch{val='Ошибка';upd();}
+        }
+        if(k==='√'){val=String(Math.sqrt(parseNum(val)));upd();}
+        if(k==='±'){val=String(-parseNum(val));upd();}
+        if(k==='x²'){val=String(parseNum(val)**2);upd();}
+        if(k==='π'){val=String(Math.PI);upd();} if(k==='e'){val=String(Math.E);upd();}
+        if(k==='sin'){val=String(Math.sin(parseNum(val)));upd();} if(k==='cos'){val=String(Math.cos(parseNum(val)));upd();} if(k==='tan'){val=String(Math.tan(parseNum(val)));upd();}
+        if(k==='log'){val=String(Math.log10(parseNum(val)));upd();} if(k==='ln'){val=String(Math.log(parseNum(val)));upd();}
+        if(k==='!'){let n=parseInt(parseNum(val));let f=1;for(let i=2;i<=n;i++)f*=i;val=String(f);upd();}
+        if(['HEX','DEC','OCT','BIN'].includes(k)){base={HEX:16,DEC:10,OCT:8,BIN:2}[k]; if(prev!==null){val=parseInt(parseNum(val)).toString(base).toUpperCase();upd();}}
+      }
+      function parseNum(x){ if(mode==='Программист' && /[A-F]/i.test(String(x))) return parseInt(x,16); return Number(x);}
+      c.querySelector('#mode').onchange=e=>{mode=e.target.value; renderKeys();};
+      renderKeys();
+      window.addEventListener('keydown',e=>{if(state.activeWindow===w.id&&'0123456789+-*/.'.includes(e.key))press(e.key); if(e.key==='Enter')press('=');});
+    }
+
+    function appPaint(w){
+      w.el.querySelector('.content').innerHTML=`<div class="paint-tools"><button data-t="pencil">Карандаш</button><button data-t="brush">Кисть</button><button data-t="eraser">Ластик</button><button data-t="line">Линия</button><button data-t="rect">Прямоуг.</button><button data-t="ellipse">Эллипс</button><button data-t="star">Звезда</button><button id="clr">Очистить</button><input id="col" type="color" value="#0078d7"><input id="size" type="range" min="1" max="30" value="3"><button id="save">Сохранить PNG</button></div><canvas id="pc" width="900" height="520" style="background:#fff"></canvas>`;
+      const c=w.el.querySelector('.content'), cv=c.querySelector('#pc'), ctx=cv.getContext('2d');
+      let tool='pencil', drawing=false, sx=0, sy=0, img=null;
+      c.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>tool=b.dataset.t);
+      cv.onmousedown=e=>{drawing=true; sx=e.offsetX; sy=e.offsetY; img=ctx.getImageData(0,0,cv.width,cv.height); if(tool==='pencil'||tool==='brush'||tool==='eraser'){ctx.beginPath();ctx.moveTo(sx,sy);}};
+      cv.onmousemove=e=>{
+        if(!drawing)return;
+        const x=e.offsetX,y=e.offsetY;
+        ctx.lineWidth=+c.querySelector('#size').value; ctx.strokeStyle=tool==='eraser'?'#fff':c.querySelector('#col').value; ctx.fillStyle=ctx.strokeStyle;
+        if(tool==='pencil'||tool==='brush'||tool==='eraser'){ctx.lineTo(x,y);ctx.stroke();}
+        else{
+          ctx.putImageData(img,0,0);
+          if(tool==='line'){ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(x,y);ctx.stroke();}
+          if(tool==='rect'){ctx.strokeRect(sx,sy,x-sx,y-sy);}
+          if(tool==='ellipse'){ctx.beginPath();ctx.ellipse((sx+x)/2,(sy+y)/2,Math.abs(x-sx)/2,Math.abs(y-sy)/2,0,0,Math.PI*2);ctx.stroke();}
+          if(tool==='star'){drawStar(ctx,(sx+x)/2,(sy+y)/2,5,Math.abs(x-sx)/2,Math.abs(x-sx)/4);}
+        }
+      };
+      cv.onmouseup=()=>drawing=false;
+      c.querySelector('#clr').onclick=()=>ctx.clearRect(0,0,cv.width,cv.height);
+      c.querySelector('#save').onclick=()=>{const a=document.createElement('a');a.download='paint.png';a.href=cv.toDataURL();a.click();};
+    }
+    function drawStar(ctx,cx,cy,sp,or,ir){let rot=Math.PI/2*3,x=cx,y=cy;ctx.beginPath();ctx.moveTo(cx,cy-or);for(let i=0;i<sp;i++){x=cx+Math.cos(rot)*or;y=cy+Math.sin(rot)*or;ctx.lineTo(x,y);rot+=Math.PI/sp;x=cx+Math.cos(rot)*ir;y=cy+Math.sin(rot)*ir;ctx.lineTo(x,y);rot+=Math.PI/sp;}ctx.lineTo(cx,cy-or);ctx.closePath();ctx.stroke();}
+
+    function appCmd(w){
+      let cwd='C:\\Users\\User';
+      w.el.querySelector('.content').innerHTML=`<div class="cmd"><div class="cmd-out" id="o"></div><div class="cmd-line"><span id="p"></span><input id="i" autocomplete="off"></div></div>`;
+      const c=w.el.querySelector('.content'), o=c.querySelector('#o'), i=c.querySelector('#i'), p=c.querySelector('#p');
+      function print(t=''){o.textContent+=t+'\n';o.scrollTop=o.scrollHeight;}
+      function prompt(){p.textContent=cwd+'> ';i.focus();}
+      print('Microsoft Windows [Version 8.1.26000]');print('(c) Update 26 Corporation. Все права защищены.'); prompt();
+      function run(cmd){
+        const [k,...rest]=cmd.trim().split(' '), arg=rest.join(' ');
+        if(!k)return;
+        if(k==='help') print('dir cd mkdir del echo type cls color date time tasklist systeminfo ipconfig ping tree ver calc notepad bsod');
+        else if(k==='dir') fsList(cwd).forEach(x=>print((x.type==='dir'?'[DIR] ':'      ')+x.name));
+        else if(k==='cd'){const np=arg.includes(':')?arg:(cwd+'\\'+arg); if(fsResolve(np))cwd=np; else print('Система не может найти указанный путь.')}
+        else if(k==='mkdir'){if(!fsMkdir(cwd,arg))print('Не удалось создать каталог.')}
+        else if(k==='del'){if(!fsDel(cwd,arg))print('Файл не найден.')}
+        else if(k==='echo' && cmd.includes('>')){const [txt,fn]=cmd.slice(5).split('>'); fsWrite(cwd,fn.trim(),txt.trim());}
+        else if(k==='echo') print(arg);
+        else if(k==='type'){const n=fsResolve(cwd)?.children?.[arg]; print(n?.content||'Файл не найден');}
+        else if(k==='cls'){o.textContent='';}
+        else if(k==='color'){o.style.color=arg==='0a'?'#8cff8c':'#fff';}
+        else if(k==='date') print(new Date().toLocaleDateString('ru-RU'));
+        else if(k==='time') print(new Date().toLocaleTimeString('ru-RU'));
+        else if(k==='tasklist') state.processList.forEach(p=>print(`${p.title}\tCPU ${Math.floor(Math.random()*20)}%\tRAM ${p.ram}MB`));
+        else if(k==='systeminfo') print('OS: Windows 8.1 Update 26 Build 9600.26000\nCPU: MetroCore X\nRAM: 16 GB');
+        else if(k==='ipconfig') print('Wi-Fi Adapter:\nIPv4: 192.168.0.'+Math.floor(Math.random()*200+10)+'\nMask: 255.255.255.0\nGateway: 192.168.0.1');
+        else if(k==='ping'){for(let j=0;j<4;j++)print(`Ответ от ${arg||'host'}: bytes=32 time=${10+Math.floor(Math.random()*30)}ms TTL=53`);}
+        else if(k==='tree'){print('C:\\\n├─Users\n│ └─User\n│   ├─Desktop\n│   ├─Documents\n│   └─Downloads\n├─Windows\n└─Program Files');}
+        else if(k==='ver') print('Windows 8.1 Update 26 [Version 8.1.26000]');
+        else if(k==='calc') openApp('calc');
+        else if(k==='notepad') openApp('notepad');
+        else if(k==='bsod') showBSOD();
+        else print('Неизвестная команда.');
+      }
+      i.onkeydown=e=>{if(e.key==='Enter'){print(p.textContent+i.value); run(i.value); i.value=''; prompt();}};
+    }
+    function showBSOD(){
+      const d=document.createElement('div');d.className='screen';d.style.background='#0078d7';d.style.zIndex='9000';
+      d.innerHTML='<div style="padding:80px;font-size:34px">:(</div><div style="padding:0 80px;font-size:22px">На вашем ПК возникла проблема, и его необходимо перезагрузить.</div><div style="padding:30px 80px">Код остановки: UPDATE26_CRITICAL_KERNEL_FAILURE</div><div style="padding:10px 80px" id="bsodt">Перезагрузка через 5...</div>';
+      document.body.appendChild(d); let s=5; const t=setInterval(()=>{$('#bsodt').textContent='Перезагрузка через '+(--s)+'...'; if(s<=0){clearInterval(t);d.remove();boot();}},1000);
+    }
+
+    function appBrowser(w){
+      const tabs=[{title:'about:home',url:'about:home'}]; let cur=0, history=['about:home'], hidx=0;
+      w.el.querySelector('.content').innerHTML=`<div class="app-toolbar"><button id="back">←</button><button id="fwd">→</button><button id="ref">⟳</button><button id="home">⌂</button><input id="url" style="width:360px" value="about:home"><button id="go">Перейти</button><button id="newTab">+ Вкладка</button></div><div id="tabs" style="display:flex;border-bottom:1px solid #ccc"></div><div id="view" style="height:calc(100% - 76px);overflow:auto"></div>`;
+      const c=w.el.querySelector('.content'), view=c.querySelector('#view'), url=c.querySelector('#url');
+      function page(u){
+        if(u==='about:home') return `<div style="padding:18px"><h2 style="font-weight:300">Internet Explorer 12 Update 26</h2><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">${['Новости','Погода','Почта','Store','Вики','Настройки'].map(x=>`<div style="background:#e8f0ff;padding:18px">${x}</div>`).join('')}</div></div>`;
+        if(u==='about:settings') return `<div style="padding:18px"><h3>Настройки браузера</h3><p>Домашняя страница: about:home</p><p>Безопасность: стандартная</p><p>История: ${history.length} записей</p></div>`;
+        if(u.startsWith('wiki:')) return `<div style="padding:18px"><h2>${u.slice(5)}</h2><p>Эта статья встроена во внутреннюю мини‑вики. Здесь можно читать материалы офлайн: о технологиях, науке и истории Windows.</p></div>`;
+        return `<iframe src="${u}" style="border:0;width:100%;height:100%"></iframe>`;
+      }
+      function renderTabs(){c.querySelector('#tabs').innerHTML=tabs.map((t,i)=>`<div data-i="${i}" style="padding:8px 12px;border-right:1px solid #ccc;cursor:pointer;background:${i===cur?'#fff':'#f0f0f0'}">${t.title}</div>`).join(''); c.querySelectorAll('#tabs div').forEach(d=>d.onclick=()=>{cur=+d.dataset.i;url.value=tabs[cur].url;open(url.value,false);});}
+      function open(u,push=true){tabs[cur]={title:u,url:u};view.innerHTML=page(u); if(push){history=history.slice(0,hidx+1);history.push(u);hidx++;} renderTabs();}
+      c.querySelector('#go').onclick=()=>open(url.value); c.querySelector('#home').onclick=()=>{url.value='about:home';open('about:home');};
+      c.querySelector('#newTab').onclick=()=>{tabs.push({title:'about:home',url:'about:home'});cur=tabs.length-1;renderTabs();open('about:home');};
+      c.querySelector('#back').onclick=()=>{if(hidx>0){hidx--;url.value=history[hidx];open(url.value,false)}};
+      c.querySelector('#fwd').onclick=()=>{if(hidx<history.length-1){hidx++;url.value=history[hidx];open(url.value,false)}};
+      c.querySelector('#ref').onclick=()=>open(url.value,false);
+      renderTabs();open('about:home',false);
+    }
+
+    function appMail(w){
+      let folder='inbox', selected=null;
+      w.el.querySelector('.content').innerHTML=`<div class="mail-layout"><div class="mail-folders" id="f"></div><div class="mail-list" id="l"></div><div id="v"><div class="app-toolbar"><button id="compose">Написать</button></div><div style="padding:10px">Выберите письмо</div></div></div>`;
+      const c=w.el.querySelector('.content');
+      function renderFolders(){c.querySelector('#f').innerHTML=['inbox','sent','drafts','spam','trash'].map(x=>`<div data-f="${x}">${({inbox:'Входящие',sent:'Отправленные',drafts:'Черновики',spam:'Спам',trash:'Корзина'})[x]}</div>`).join(''); c.querySelectorAll('#f div').forEach(d=>d.onclick=()=>{folder=d.dataset.f;renderList();});}
+      function renderList(){const arr=state.mails[folder]; c.querySelector('#l').innerHTML=arr.map(m=>`<div data-id="${m.id}"><b>${m.subject}</b><br><small>${m.from||'me'} · ${m.date}</small></div>`).join(''); c.querySelectorAll('#l div').forEach(d=>d.onclick=()=>openMail(d.dataset.id));}
+      function openMail(id){selected=state.mails[folder].find(x=>x.id===id); if(!selected)return; c.querySelector('#v').innerHTML=`<div class="app-toolbar"><button id="compose">Написать</button></div><div style="padding:10px"><h3>${selected.subject}</h3><div><b>От:</b> ${selected.from||'me'}</div><div><b>Дата:</b> ${selected.date}</div><hr><p>${selected.body}</p></div>`; c.querySelector('#compose').onclick=compose;}
+      function compose(){
+        c.querySelector('#v').innerHTML=`<div style="padding:10px"><h3>Новое письмо</h3><input id="to" style="width:100%;margin:4px 0" placeholder="Кому"><input id="sub" style="width:100%;margin:4px 0" placeholder="Тема"><textarea id="body" style="width:100%;height:250px"></textarea><button id="send">Отправить</button></div>`;
+        c.querySelector('#send').onclick=()=>{state.mails.sent.unshift({id:'s'+Date.now(),from:'user@local',subject:c.querySelector('#sub').value||'Без темы',date:new Date().toLocaleDateString('ru-RU'),body:c.querySelector('#body').value}); saveAll(); notify('Письмо отправлено'); folder='sent'; renderList();};
+      }
+      renderFolders(); renderList(); c.querySelector('#compose').onclick=compose;
+    }
+
+    function appCalendar(w){
+      let d=new Date(),view='month';
+      w.el.querySelector('.content').innerHTML=`<div class="app-toolbar"><button id="prev">◀</button><button id="next">▶</button><select id="v"><option value="month">Месяц</option><option value="week">Неделя</option><option value="day">День</option></select><span id="t"></span></div><div class="calendar"><div class="cal-grid" id="g"></div></div>`;
+      const c=w.el.querySelector('.content');
+      function draw(){
+        const y=d.getFullYear(),m=d.getMonth(); c.querySelector('#t').textContent=d.toLocaleDateString('ru-RU',{month:'long',year:'numeric'});
+        const g=c.querySelector('#g'); g.innerHTML=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(x=>`<div><b>${x}</b></div>`).join('');
+        const first=(new Date(y,m,1).getDay()+6)%7, days=new Date(y,m+1,0).getDate();
+        for(let i=0;i<first;i++)g.innerHTML+='<div></div>';
+        for(let day=1;day<=days;day++){
+          const date=new Date(y,m,day).toLocaleDateString('ru-RU');
+          const ev=state.calendar.filter(e=>e.date===date);
+          g.innerHTML+=`<div class="cal-cell" data-date="${date}" style="${day===new Date().getDate()&&m===new Date().getMonth()?'outline:2px solid var(--accent)':''}">${day}<div style="font-size:11px;color:#0078d7">${ev.map(e=>e.time+' '+e.title).join('<br>')}</div></div>`;
+        }
+        g.querySelectorAll('.cal-cell').forEach(cell=>cell.onclick=()=>{const title=prompt('Событие'); if(!title)return; const time=prompt('Время','12:00')||'12:00'; const desc=prompt('Описание','')||''; state.calendar.push({date:cell.dataset.date,title,time,desc}); saveAll(); draw(); notify('Событие добавлено');});
+      }
+      c.querySelector('#prev').onclick=()=>{d.setMonth(d.getMonth()-1);draw();};
+      c.querySelector('#next').onclick=()=>{d.setMonth(d.getMonth()+1);draw();};
+      c.querySelector('#v').onchange=e=>{view=e.target.value; notify('Режим: '+({month:'Месяц',week:'Неделя',day:'День'})[view]);};
+      draw();
+    }
+
+    function appWeather(w){
+      const icons=['☀️','🌤','⛅','🌧','🌩','❄️'], cities=['Москва','Казань','Сочи','Екатеринбург','Новосибирск'];
+      w.el.querySelector('.content').innerHTML=`<div class="weather"><h2 style="font-weight:300">Погода</h2><input id="city" value="Москва"><button id="upd">Обновить</button><div id="cur"></div><h3>Прогноз на 7 дней</h3><div id="week"></div></div>`;
+      const c=w.el.querySelector('.content');
+      function gen(){
+        const city=c.querySelector('#city').value||'Москва', temp=Math.floor(Math.random()*30-5), hum=Math.floor(Math.random()*50+40), wind=Math.floor(Math.random()*20+2), icon=icons[Math.floor(Math.random()*icons.length)];
+        c.querySelector('#cur').innerHTML=`<h1>${icon} ${temp}°C</h1><div>${city}</div><div>Влажность: ${hum}% · Ветер: ${wind} м/с</div>`;
+        c.querySelector('#week').innerHTML=Array.from({length:7},(_,i)=>`<div>${new Date(Date.now()+i*86400000).toLocaleDateString('ru-RU',{weekday:'short'})}: ${icons[Math.floor(Math.random()*icons.length)]} ${Math.floor(Math.random()*28-3)}°</div>`).join('');
+      }
+      c.querySelector('#upd').onclick=gen; gen();
+    }
+
+    function appMusic(w){
+      const tracks=Array.from({length:16},(_,i)=>`Трек ${i+1}: Metro Vibes ${i%5+1}`); let idx=0,playing=false,pos=0,dur=180,rep=false,sh=false,timer=null;
+      w.el.querySelector('.content').innerHTML=`<div class="music"><div class="tracks" id="tl"></div><div style="padding:10px"><div style="width:180px;height:180px;background:conic-gradient(#0078d7,#6633cc,#00aabb,#0078d7);margin-bottom:10px"></div><h3 id="tt"></h3><canvas class="vis" id="vis" width="540" height="120"></canvas><div><button id="prev">⏮</button><button id="play">▶</button><button id="next">⏭</button><button id="sh">🔀</button><button id="rp">🔁</button></div><input id="prog" type="range" min="0" max="${dur}" value="0" style="width:100%"><div><input id="vol" type="range" min="0" max="100" value="${state.settings.volume}"></div></div></div>`;
+      const c=w.el.querySelector('.content'), tl=c.querySelector('#tl'), tt=c.querySelector('#tt'), prog=c.querySelector('#prog');
+      tl.innerHTML=tracks.map((t,i)=>`<div data-i="${i}">${t}</div>`).join('');
+      function load(i){idx=i;pos=0;prog.value=0;tt.textContent=tracks[idx];}
+      tl.querySelectorAll('div').forEach(d=>d.onclick=()=>{load(+d.dataset.i);play(true)});
+      function play(force){if(force)playing=false; playing=!playing; c.querySelector('#play').textContent=playing?'⏸':'▶'; if(playing){timer=setInterval(()=>{pos++;prog.value=pos;if(pos>=dur){if(rep)pos=0;else next();}},1000)}else clearInterval(timer);}
+      function next(){load(sh?Math.floor(Math.random()*tracks.length):(idx+1)%tracks.length);if(playing)play(true);}
+      c.querySelector('#play').onclick=()=>play(false); c.querySelector('#prev').onclick=()=>load((idx-1+tracks.length)%tracks.length); c.querySelector('#next').onclick=next;
+      c.querySelector('#sh').onclick=()=>sh=!sh; c.querySelector('#rp').onclick=()=>rep=!rep; prog.oninput=e=>pos=+e.target.value;
+      const ctx=c.querySelector('#vis').getContext('2d'); (function anim(){ctx.clearRect(0,0,540,120); for(let i=0;i<64;i++){const h=playing?(20+Math.random()*80):8; ctx.fillStyle='#00a2ff';ctx.fillRect(i*9,120-h,6,h);} requestAnimationFrame(anim);})();
+      load(0);
+    }
+
+    function appPhotos(w){
+      const pics=Array.from({length:18},(_,i)=>`linear-gradient(${Math.random()*360}deg,hsl(${Math.random()*360} 80% 55%),hsl(${Math.random()*360} 80% 45%))`);
+      w.el.querySelector('.content').innerHTML=`<div class="app-toolbar"><button id="slide">Слайдшоу</button> <label>Яркость <input id="br" type="range" min="50" max="150" value="100"></label> <label>Контраст <input id="ct" type="range" min="50" max="150" value="100"></label> <label>Насыщенность <input id="sat" type="range" min="0" max="200" value="100"></label> <button id="sep">Сепия</button><button id="bw">Ч/Б</button></div><div class="photos-grid" id="g"></div><div id="view" class="hidden" style="position:absolute;inset:32px 0 0 0;background:#000;align-items:center;justify-content:center"><div id="big" style="width:70%;height:70%"></div></div>`;
+      const c=w.el.querySelector('.content'), g=c.querySelector('#g'), big=c.querySelector('#big'), view=c.querySelector('#view');
+      let fi='none', idx=0, slide=null;
+      g.innerHTML=pics.map((p,i)=>`<div class="ph" data-i="${i}" style="background:${p}"></div>`).join('');
+      function open(i){idx=i;big.style.background=pics[i];view.classList.remove('hidden');view.style.display='flex';applyFilters();}
+      g.querySelectorAll('.ph').forEach(d=>d.onclick=()=>open(+d.dataset.i));
+      view.onclick=()=>{view.classList.add('hidden');view.style.display='none'; clearInterval(slide);};
+      function applyFilters(){const br=c.querySelector('#br').value,ct=c.querySelector('#ct').value,s=c.querySelector('#sat').value; big.style.filter=`brightness(${br}%) contrast(${ct}%) saturate(${s}%) ${fi}`;}
+      ['#br','#ct','#sat'].forEach(id=>c.querySelector(id).oninput=applyFilters);
+      c.querySelector('#sep').onclick=()=>{fi='sepia(1)';applyFilters();}; c.querySelector('#bw').onclick=()=>{fi='grayscale(1)';applyFilters();};
+      c.querySelector('#slide').onclick=()=>{open(0); clearInterval(slide); slide=setInterval(()=>{idx=(idx+1)%pics.length;open(idx);},1300);};
+    }
+
+    function appSettings(w){
+      w.el.querySelector('.content').innerHTML=`<div style="display:grid;grid-template-columns:220px 1fr;height:100%"><div class="list" id="cat"></div><div id="page" style="padding:12px"></div></div>`;
+      const c=w.el.querySelector('.content');
+      const cats=['Персонализация','Аккаунт','Сеть','Звук','Дисплей','Система','Обновления'];
+      c.querySelector('#cat').innerHTML=cats.map(x=>`<div>${x}</div>`).join('');
+      c.querySelectorAll('#cat div').forEach(d=>d.onclick=()=>show(d.textContent));
+      function show(name){
+        const p=c.querySelector('#page');
+        if(name==='Персонализация') p.innerHTML=`<h3>Персонализация</h3><div>Цвет акцента: ${accentColors.map(col=>`<button class="ac" data-c="${col}" style="background:${col};width:28px;height:28px;border:1px solid #444"></button>`).join('')}</div><div style="margin-top:8px">Фон Start: <select id="sbg"><option value="#1E1E2E">Тёмно-синий</option><option value="#23395d">Глубокий синий</option><option value="#402b6e">Фиолетовый</option></select></div>`;
+        if(name==='Аккаунт') p.innerHTML=`<h3>Аккаунт</h3><input id="uname" value="${state.settings.userName}"><button id="usave">Сохранить</button>`;
+        if(name==='Сеть') p.innerHTML=`<h3>Сеть</h3><p>SSID: Update26_WiFi</p><p>Сигнал: 82%</p><p>IPv4: 192.168.0.42</p>`;
+        if(name==='Звук') p.innerHTML=`<h3>Звук</h3><input id="vol" type="range" min="0" max="100" value="${state.settings.volume}">`;
+        if(name==='Дисплей') p.innerHTML=`<h3>Дисплей</h3><select id="scale"><option>80</option><option selected>100</option><option>120</option></select> %`;
+        if(name==='Система') p.innerHTML=`<h3>О системе</h3><p>Windows 8.1 Update 26, Build 9600.26000</p>`;
+        if(name==='Обновления') p.innerHTML=`<h3>Обновления</h3><button id="chk">Проверить обновления</button><div id="u"></div>`;
+        p.querySelectorAll('.ac').forEach(b=>b.onclick=()=>{state.settings.accent=b.dataset.c; renderStart(); saveAll();});
+        p.querySelector('#sbg')?.addEventListener('change',e=>{state.settings.startBg=e.target.value;renderStart();saveAll();});
+        p.querySelector('#usave')?.addEventListener('click',()=>{state.settings.userName=p.querySelector('#uname').value||'User'; $('#startUser').textContent=state.settings.userName; $('#loginName').textContent=state.settings.userName; saveAll();});
+        p.querySelector('#vol')?.addEventListener('input',e=>{state.settings.volume=+e.target.value;saveAll();});
+        p.querySelector('#scale')?.addEventListener('change',e=>{state.settings.scale=+e.target.value;renderStart();saveAll();});
+        p.querySelector('#chk')?.addEventListener('click',()=>{const u=p.querySelector('#u');u.textContent='Проверка обновлений...'; setTimeout(()=>u.textContent='Система обновлена',1700);});
+      }
+      show('Персонализация');
+    }
+
+    function appTaskmgr(w){
+      w.el.querySelector('.content').innerHTML=`<div class="taskmgr"><div class="tm-list"><h3>Процессы</h3><div id="pl"></div><button id="kill">Завершить процесс</button></div><div class="tm-graph"><h3>Производительность</h3><canvas id="cpu" width="340" height="120"></canvas><canvas id="ram" width="340" height="120"></canvas><div id="up"></div></div></div>`;
+      const c=w.el.querySelector('.content'); let selected=null, start=Date.now();
+      function renderP(){c.querySelector('#pl').innerHTML=state.processList.map(p=>`<div data-id="${p.id}" style="padding:6px;border:1px solid #ddd;margin:4px 0">${p.title} — CPU ${Math.floor(Math.random()*35)}% RAM ${p.ram}MB</div>`).join(''); c.querySelectorAll('#pl div').forEach(d=>d.onclick=()=>{selected=d.dataset.id;c.querySelectorAll('#pl div').forEach(x=>x.style.background='');d.style.background='#d7ecff';});}
+      c.querySelector('#kill').onclick=()=>{if(!selected)return; const wId=Object.keys(state.windows).find(k=>k.includes(selected.split('_')[0])); if(wId) closeWindow(wId); renderP();};
+      const c1=c.querySelector('#cpu').getContext('2d'),c2=c.querySelector('#ram').getContext('2d'),data1=[],data2=[];
+      (function loop(){data1.push(Math.random()*100);data2.push(30+Math.random()*60); if(data1.length>60){data1.shift();data2.shift();}
+        [ [c1,data1,'#0078d7','CPU'], [c2,data2,'#107c10','RAM']].forEach(([ctx,arr,col,l])=>{ctx.clearRect(0,0,340,120);ctx.strokeStyle=col;ctx.beginPath();arr.forEach((v,i)=>{const x=i*5.6,y=110-v; if(i===0)ctx.moveTo(x,y); else ctx.lineTo(x,y);});ctx.stroke();ctx.fillText(l,6,12);});
+        c.querySelector('#up').textContent='Аптайм: '+Math.floor((Date.now()-start)/1000)+' сек';
+        requestAnimationFrame(loop);
+      })(); renderP();
+    }
+    function appContacts(w){
+      w.el.querySelector('.content').innerHTML=`<div class="contacts-wrap"><div class="list"><input id="q" placeholder="Поиск" style="width:100%"><div id="lst"></div><button id="add">Добавить</button></div><div id="card" style="padding:12px">Выберите контакт</div></div>`;
+      const c=w.el.querySelector('.content');
+      function render(){const q=(c.querySelector('#q').value||'').toLowerCase(); c.querySelector('#lst').innerHTML=state.contacts.filter(x=>x.name.toLowerCase().includes(q)||x.email.includes(q)).map((p,i)=>`<div data-i="${i}">${p.name}</div>`).join(''); c.querySelectorAll('#lst div').forEach(d=>d.onclick=()=>{const p=state.contacts[d.dataset.i]; c.querySelector('#card').innerHTML=`<h3>${p.name}</h3><p>Телефон: ${p.phone}</p><p>Email: ${p.email}</p>`;});}
+      c.querySelector('#q').oninput=render; c.querySelector('#add').onclick=()=>{const name=prompt('Имя');if(!name)return;const phone=prompt('Телефон','+7-900-0000000')||'';const email=prompt('Email','new@mail.local')||'';state.contacts.push({name,phone,email});saveAll();render();}; render();
+    }
+    function appNews(w){
+      const cats=['Технологии','Наука','Спорт','Мир']; let cur='Технологии';
+      const items=Array.from({length:20},(_,i)=>({cat:cats[i%4],title:`Новость ${i+1}: ${['ИИ','Космос','Футбол','Экономика'][i%4]}`,text:'Подробный материал о событии дня: аналитика, мнения экспертов и ключевые факты для читателей Update 26.'}));
+      w.el.querySelector('.content').innerHTML=`<div class="app-toolbar" id="cats"></div><div class="news-grid" id="grid"></div><div id="article" style="padding:14px"></div>`;
+      const c=w.el.querySelector('.content'); c.querySelector('#cats').innerHTML=cats.map(x=>`<button data-c="${x}">${x}</button>`).join('');
+      c.querySelectorAll('#cats button').forEach(b=>b.onclick=()=>{cur=b.dataset.c;render();});
+      function render(){c.querySelector('#grid').innerHTML=items.filter(x=>x.cat===cur).map((n,i)=>`<div class="news-card" data-i="${i}"><h4>${n.title}</h4><p>${n.text.slice(0,70)}...</p></div>`).join(''); c.querySelectorAll('.news-card').forEach(d=>d.onclick=()=>{const n=items.filter(x=>x.cat===cur)[d.dataset.i]; c.querySelector('#article').innerHTML=`<h2>${n.title}</h2><p>${n.text.repeat(4)}</p>`;});}
+      render();
+    }
+    function appStore(w){
+      const apps=[['Рисовалка Pro','Игры'],['Фокус Таймер','Продуктивность'],['Ретро Радио Plus','Развлечения'],['Пасьянс Deluxe','Игры'],['Todo Metro','Продуктивность']];
+      w.el.querySelector('.content').innerHTML=`<div style="padding:10px;background:#e7f0ff">Рекомендуемое · новые хиты недели</div><div class="store-grid" id="s"></div>`;
+      const c=w.el.querySelector('.content'); c.querySelector('#s').innerHTML=apps.map((a,i)=>`<div class="store-card"><h4>${a[0]}</h4><p>${a[1]}</p><button data-i="${i}">Установить</button><div id="p${i}"></div></div>`).join('');
+      c.querySelectorAll('button').forEach(b=>b.onclick=()=>{const i=b.dataset.i,p=c.querySelector('#p'+i); let v=0; const t=setInterval(()=>{v+=10;p.textContent='Установка: '+v+'%'; if(v>=100){clearInterval(t);p.textContent='Установлено';notify(`${apps[i][0]} установлено`);} },120);});
+    }
+    function appRecorder(w){
+      w.el.querySelector('.content').innerHTML=`<div style="padding:20px;text-align:center"><button id="rec" style="width:110px;height:110px;border-radius:50%;border:0;background:#e81123;color:#fff;font-size:32px">●</button><h2 id="tm">00:00</h2><div id="lst"></div></div>`;
+      const c=w.el.querySelector('.content'); let on=false,s=0,t=null,list=[];
+      c.querySelector('#rec').onclick=()=>{on=!on; c.querySelector('#rec').style.opacity=on?'0.6':'1'; if(on){t=setInterval(()=>{s++;c.querySelector('#tm').textContent=new Date(s*1000).toISOString().slice(14,19);},1000);} else {clearInterval(t); list.unshift('Запись '+new Date().toLocaleTimeString('ru-RU')+' ('+c.querySelector('#tm').textContent+')'); c.querySelector('#lst').innerHTML=list.map(x=>`<div>${x}</div>`).join(''); s=0; c.querySelector('#tm').textContent='00:00';}};
+    }
+    function appPiano(w){
+      const notes=[261.63,293.66,329.63,349.23,392,440,493.88,523.25,587.33,659.25,698.46,783.99];
+      w.el.querySelector('.content').innerHTML=`<div style="padding:10px"><p>Клавиши A-L</p><div id="keys" style="display:flex;height:180px;position:relative"></div></div>`;
+      const c=w.el.querySelector('.content'), k=c.querySelector('#keys');
+      notes.forEach((f,i)=>{const d=document.createElement('div');d.style.cssText='width:50px;border:1px solid #000;background:#fff;height:180px;position:relative';d.dataset.f=f;d.textContent=String.fromCharCode(65+i);d.style.display='flex';d.style.alignItems='end';d.style.justifyContent='center';d.style.fontSize='11px';k.appendChild(d);});
+      function hit(i){const key=k.children[i]; if(!key)return; key.style.background='#9dd3ff'; setTimeout(()=>key.style.background='#fff',120); audio.tone(notes[i],.25,.08,'sine');}
+      k.querySelectorAll('div').forEach((d,i)=>d.onmousedown=()=>hit(i));
+      window.addEventListener('keydown',e=>{const i='ASDFGHJKL;'.indexOf(e.key.toUpperCase()); if(i>=0&&state.activeWindow===w.id)hit(i);});
+    }
+    function appRadio(w){
+      const st=[['Metro FM','Pop'],['Retro Wave','Synth'],['News 26','Talk'],['Jazz Box','Jazz']]; let on=false,idx=0;
+      w.el.querySelector('.content').innerHTML=`<div style="padding:10px"><h3>Радио</h3><div id="st"></div><button id="play">Play</button><input id="vol" type="range" min="0" max="100" value="${state.settings.volume}"><canvas id="eq" width="520" height="100"></canvas></div>`;
+      const c=w.el.querySelector('.content'); c.querySelector('#st').innerHTML=st.map((s,i)=>`<div data-i="${i}" style="padding:6px;border:1px solid #ccc;margin:4px 0">${s[0]} · ${s[1]}</div>`).join('');
+      c.querySelectorAll('#st div').forEach(d=>d.onclick=()=>idx=+d.dataset.i); c.querySelector('#play').onclick=()=>{on=!on; c.querySelector('#play').textContent=on?'Stop':'Play';};
+      const ctx=c.querySelector('#eq').getContext('2d'); (function loop(){ctx.clearRect(0,0,520,100); for(let i=0;i<50;i++){const h=on?Math.random()*90:5; ctx.fillStyle='#ff8c00'; ctx.fillRect(i*10,100-h,6,h);} requestAnimationFrame(loop);})();
+    }
+    function appCortana(w){
+      w.el.querySelector('.content').innerHTML=`<div class="ai-chat"><div style="padding:8px;display:flex;align-items:center;gap:8px"><div id="orb" style="width:22px;height:22px;border-radius:50%;background:#9b8cff;animation:pulse 1.2s infinite"></div><b>Cortana AI+</b></div><div class="chat-log" id="log"></div><div class="chat-send"><input id="in" placeholder="Введите запрос"><button id="send">Отправить</button></div></div><style>@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.2)}100%{transform:scale(1)}}</style>`;
+      const c=w.el.querySelector('.content'),log=c.querySelector('#log'),inp=c.querySelector('#in');
+      function say(text,u){const d=document.createElement('div');d.className='msg '+(u?'u':'b');d.textContent=text;log.appendChild(d);log.scrollTop=log.scrollHeight;}
+      function bot(q){
+        const t=q.toLowerCase();
+        if(/привет|здрав/.test(t)) return 'Привет! Я Cortana AI+, чем могу помочь?';
+        if(/который час|время/.test(t)) return 'Сейчас '+new Date().toLocaleTimeString('ru-RU');
+        if(/какая сегодня дата|дата/.test(t)) return 'Сегодня '+new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+        if(/сколько будет/.test(t)){const ex=t.replace(/[^0-9+\-*/().]/g,''); try{return 'Результат: '+Function('return '+ex)()}catch{return 'Не удалось вычислить выражение.'}}
+        if(/открой калькулятор/.test(t)){openApp('calc');return 'Открываю калькулятор.'}
+        if(/открой блокнот/.test(t)){openApp('notepad');return 'Запускаю Блокнот.'}
+        if(/погода/.test(t)) return ['Сейчас ясно, +22°C','Ожидается облачность и +18°C','Вечером небольшой дождь, +16°C'][Math.floor(Math.random()*3)];
+        if(/шутк/.test(t)) return jokes[Math.floor(Math.random()*jokes.length)];
+        if(/факт/.test(t)) return facts[Math.floor(Math.random()*facts.length)];
+        if(/найди /.test(t)) return 'Результаты по запросу "'+q.split(' ').slice(1).join(' ')+'":\n1) Встроенная справка\n2) Новости\n3) Параметры';
+        if(/переведи /.test(t)){const w=t.split('переведи ')[1].trim(); return dict[w]?`"${w}" → "${dict[w]}"`:'Слово не найдено в локальном словаре.'}
+        if(/таймер на/.test(t)){const m=+((t.match(/(\d+)/)||[])[1]||1); setTimeout(()=>notify('Таймер завершен'),m*60000); return `Таймер на ${m} мин запущен.`}
+        if(/напомни через/.test(t)){const m=+((t.match(/(\d+)/)||[])[1]||1); setTimeout(()=>notify('Напоминание от Cortana: '+q),m*60000); return `Напомню через ${m} мин.`}
+        if(/о windows 8.1 update 26/.test(t)) return 'Windows 8.1 Update 26 — фанатская система в стиле Metro с оконным режимом, приложениями, играми и AI-функциями офлайн.';
+        if(/стих/.test(t)) return 'Синий экран рассвета,\nПлитки шепчут тихий свет,\nВ окнах — ритм планеты,\nUpdate двадцать шесть.';
+        if(/совет/.test(t)) return ['Начинай с малого шага и фиксируй прогресс.','Сохраняй файл чаще — спокойнее работа.','Учи горячие клавиши, это экономит часы.'][Math.floor(Math.random()*3)];
+        return 'Извините, я пока не понимаю эту команду, но я учусь!';
+      }
+      function send(){if(!inp.value.trim())return; const q=inp.value.trim(); say(q,true); inp.value=''; setTimeout(()=>say(bot(q),false),250);}
+      c.querySelector('#send').onclick=send; inp.onkeydown=e=>e.key==='Enter'&&send();
+      say('Добро пожаловать. Я готова помочь.',false);
+    }
+    function appWriter(w){
+      w.el.querySelector('.content').innerHTML=`<div class="writer"><div class="app-toolbar"><button id="complete">Дополни текст</button><button id="reph">Перефразируй</button><button id="fix">Исправь ошибки</button><button id="sum">Кратко</button><span id="stats"></span></div><textarea id="ta" placeholder="Введите текст..."></textarea></div>`;
+      const c=w.el.querySelector('.content'), ta=c.querySelector('#ta');
+      function upd(){const t=ta.value.trim(),w=t?t.split(/\s+/).length:0,s=t?t.split(/[.!?]+/).filter(Boolean).length:0;c.querySelector('#stats').textContent=`Слов: ${w} Символов: ${ta.value.length} Предложений: ${s}`;}
+      ta.oninput=upd; upd();
+      c.querySelector('#complete').onclick=()=>ta.value += '\n\nДополнение: на основе текущей мысли можно сделать более четкий план действий и выделить ключевые шаги.';
+      c.querySelector('#reph').onclick=()=>ta.value=ta.value.split('\n').map(x=>'Иначе говоря, '+x).join('\n');
+      c.querySelector('#fix').onclick=()=>ta.value=ta.value.replace(/\s{2,}/g,' ').replace(/\bi\b/g,'я').replace(/\bне\b \bзнаю\b/g,'не знаю');
+      c.querySelector('#sum').onclick=()=>{const s=ta.value.split(/[.!?]/).filter(Boolean).slice(0,2).join('. '); ta.value='Краткое содержание: '+s+'.';};
+    }
+    function appArt(w){
+      w.el.querySelector('.content').innerHTML=`<div class="art"><div><button data-s="abs">Абстракция</button><button data-s="land">Ландшафт</button><button data-s="geo">Геометрия</button><button data-s="pix">Пиксель-арт</button><button data-s="grad">Градиент-арт</button><button id="new">Сгенерировать новое</button><button id="save">Сохранить PNG</button></div><canvas id="ac" width="860" height="500" style="background:#fff"></canvas></div>`;
+      const c=w.el.querySelector('.content'), cv=c.querySelector('#ac'), ctx=cv.getContext('2d'); let style='abs';
+      function rnd(){ctx.clearRect(0,0,cv.width,cv.height);
+        if(style==='abs'){for(let i=0;i<120;i++){ctx.fillStyle=`hsla(${Math.random()*360},80%,55%,.6)`;ctx.beginPath();ctx.arc(Math.random()*860,Math.random()*500,10+Math.random()*70,0,Math.PI*2);ctx.fill();}}
+        if(style==='land'){const g=ctx.createLinearGradient(0,0,0,500);g.addColorStop(0,'#87ceeb');g.addColorStop(1,'#3d8b3d');ctx.fillStyle=g;ctx.fillRect(0,0,860,500);for(let i=0;i<6;i++){ctx.fillStyle=`hsl(${100+i*20},40%,${30+i*5}%)`;ctx.beginPath();ctx.moveTo(0,350-i*20);for(let x=0;x<=860;x+=60)ctx.lineTo(x,330-i*20+Math.sin((x+i*30)/80)*20);ctx.lineTo(860,500);ctx.lineTo(0,500);ctx.fill();}}
+        if(style==='geo'){for(let i=0;i<220;i++){ctx.strokeStyle=`hsl(${Math.random()*360},90%,50%)`;ctx.strokeRect(Math.random()*860,Math.random()*500,Math.random()*120,Math.random()*120);}}
+        if(style==='pix'){const s=10;for(let y=0;y<500;y+=s)for(let x=0;x<860;x+=s){ctx.fillStyle=`hsl(${(x+y)%360},70%,${40+Math.random()*20}%)`;ctx.fillRect(x,y,s,s);}}
+        if(style==='grad'){for(let i=0;i<12;i++){const g=ctx.createLinearGradient(0,0,860,500);g.addColorStop(0,`hsl(${Math.random()*360},90%,50%)`);g.addColorStop(1,`hsl(${Math.random()*360},80%,45%)`);ctx.globalAlpha=.2;ctx.fillStyle=g;ctx.fillRect(0,0,860,500);}ctx.globalAlpha=1;}
+      }
+      c.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{style=b.dataset.s;rnd();});
+      c.querySelector('#new').onclick=rnd; c.querySelector('#save').onclick=()=>{const a=document.createElement('a');a.download='ai-art.png';a.href=cv.toDataURL();a.click();}; rnd();
+    }
+    function appSnake(w){
+      w.el.querySelector('.content').innerHTML=`<div style="padding:8px"><canvas id="sn" width="520" height="360" class="game-canvas"></canvas><div>Счёт: <span id="sc">0</span> · Рекорд: <span id="hi">${state.game.snakeHi||0}</span></div></div>`;
+      const c=w.el.querySelector('.content'), cv=c.querySelector('#sn'),ctx=cv.getContext('2d'); let dir={x:1,y:0},s=[{x:10,y:10}],a={x:15,y:12},score=0,speed=120,alive=true;
+      function spawn(){a={x:Math.floor(Math.random()*26),y:Math.floor(Math.random()*18)}}
+      window.addEventListener('keydown',e=>{if(state.activeWindow!==w.id)return; if(e.key==='ArrowUp'&&dir.y!==1)dir={x:0,y:-1}; if(e.key==='ArrowDown'&&dir.y!==-1)dir={x:0,y:1}; if(e.key==='ArrowLeft'&&dir.x!==1)dir={x:-1,y:0}; if(e.key==='ArrowRight'&&dir.x!==-1)dir={x:1,y:0};});
+      function tick(){ if(!alive)return; const h={x:s[0].x+dir.x,y:s[0].y+dir.y}; if(h.x<0||h.y<0||h.x>=26||h.y>=18||s.some(p=>p.x===h.x&&p.y===h.y)){alive=false; state.game.snakeHi=Math.max(state.game.snakeHi||0,score); saveAll(); notify('Змейка: Game Over'); return;}
+        s.unshift(h); if(h.x===a.x&&h.y===a.y){score++; c.querySelector('#sc').textContent=score; spawn(); speed=Math.max(60,speed-2);} else s.pop();
+        ctx.fillStyle='#0b2b48';ctx.fillRect(0,0,520,360); ctx.fillStyle='#ff4f4f';ctx.fillRect(a.x*20,a.y*20,20,20); ctx.fillStyle='#33d17a'; s.forEach(p=>ctx.fillRect(p.x*20,p.y*20,20,20));
+        setTimeout(tick,speed);
+      } tick();
+    }
+    function appMines(w){
+      const size={easy:[9,9,10],medium:[16,16,40],hard:[30,16,99]}; let mode='easy',W=9,H=9,M=10,b=[],first=true,flags=0,t=0,int=null;
+      w.el.querySelector('.content').innerHTML=`<div class="app-toolbar"><select id="m"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select><button id="r">Новая игра</button><span id="info"></span></div><div id="g" style="display:grid;gap:1px;background:#777;padding:4px;width:max-content"></div>`;
+      const c=w.el.querySelector('.content');
+      function init(){[W,H,M]=size[mode]; b=Array.from({length:H},()=>Array.from({length:W},()=>({m:0,o:0,f:0,n:0}))); first=true;flags=0;t=0;clearInterval(int);int=setInterval(()=>{t++;upd()},1000); c.querySelector('#g').style.gridTemplateColumns=`repeat(${W},24px)`; draw();}
+      function place(ax,ay){let m=0;while(m<M){const x=Math.floor(Math.random()*W),y=Math.floor(Math.random()*H);if((x===ax&&y===ay)||b[y][x].m)continue;b[y][x].m=1;m++;}for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(b[y][x].m)continue;let n=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=x+dx,ny=y+dy;if(b[ny]?.[nx]?.m)n++;}b[y][x].n=n;}}
+      function open(x,y){const cell=b[y]?.[x]; if(!cell||cell.o||cell.f)return; if(first){place(x,y);first=false;} cell.o=1; if(cell.m){lose();return;} if(cell.n===0)for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)open(x+dx,y+dy); draw(); check();}
+      function flag(x,y){const cell=b[y][x]; if(cell.o)return; cell.f=1-cell.f; flags+=cell.f?1:-1; draw();}
+      function lose(){for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(b[y][x].m)b[y][x].o=1; draw(); notify('Сапёр: поражение');}
+      function check(){const safe=W*H-M;let o=0;for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(b[y][x].o&&!b[y][x].m)o++; if(o===safe){notify('Сапёр: победа!'); clearInterval(int);}}
+      function upd(){c.querySelector('#info').textContent=`Мины: ${M-flags} | Время: ${t}`;}
+      function draw(){upd();const g=c.querySelector('#g'); g.innerHTML=''; for(let y=0;y<H;y++)for(let x=0;x<W;x++){const cell=b[y][x],d=document.createElement('div');d.className='mn-cell';d.style.background=cell.o?'#ddd':'#bbb'; if(cell.o&&cell.m)d.textContent='💣'; else if(cell.o&&cell.n)d.textContent=cell.n; else if(cell.f)d.textContent='🚩'; d.onmousedown=e=>{if(e.button===2){e.preventDefault();flag(x,y)}else open(x,y)}; d.oncontextmenu=e=>e.preventDefault(); g.appendChild(d);} }
+      c.querySelector('#m').onchange=e=>{mode=e.target.value;init();}; c.querySelector('#r').onclick=init; init();
+    }
+    function appFifteen(w){
+      let arr=[...Array(15).keys()].map(x=>x+1).concat([0]),moves=0,start=Date.now();
+      w.el.querySelector('.content').innerHTML=`<div class="app-toolbar"><button id="sh">Перемешать</button><span id="st"></span></div><div id="g" style="display:grid;grid-template-columns:repeat(4,80px);gap:4px;padding:10px"></div>`;
+      const c=w.el.querySelector('.content');
+      function shuffle(){for(let i=0;i<200;i++){const z=arr.indexOf(0),opts=[z-1,z+1,z-4,z+4].filter(n=>n>=0&&n<16&&!(z%4===0&&n===z-1)&&!(z%4===3&&n===z+1)); const n=opts[Math.floor(Math.random()*opts.length)]; [arr[z],arr[n]]=[arr[n],arr[z]];}moves=0;start=Date.now();draw();}
+      function draw(){c.querySelector('#st').textContent=`Ходы: ${moves} | Время: ${Math.floor((Date.now()-start)/1000)}с`; c.querySelector('#g').innerHTML=arr.map((n,i)=>`<div data-i="${i}" style="height:80px;background:${n?'#ff9f43':'transparent'};display:grid;place-items:center;font-size:28px;cursor:pointer">${n||''}</div>`).join(''); c.querySelectorAll('#g div').forEach(d=>d.onclick=()=>move(+d.dataset.i));}
+      function move(i){const z=arr.indexOf(0); const ok=[z-1,z+1,z-4,z+4].includes(i)&&!(z%4===0&&i===z-1)&&!(z%4===3&&i===z+1); if(!ok)return; [arr[z],arr[i]]=[arr[i],arr[z]]; moves++; draw(); if(arr.slice(0,15).every((n,i)=>n===i+1)){notify('Пятнашки: победа!');}}
+      c.querySelector('#sh').onclick=shuffle; shuffle();
+    }
+    function appChess(w){
+      const init=[['♜','♞','♝','♛','♚','♝','♞','♜'],['♟','♟','♟','♟','♟','♟','♟','♟'],['','','','','','','',''],['','','','','','','',''],['','','','','','','',''],['','','','','','','',''],['♙','♙','♙','♙','♙','♙','♙','♙'],['♖','♘','♗','♕','♔','♗','♘','♖']];
+      let b=JSON.parse(JSON.stringify(init)),sel=null,turn='w';
+      w.el.querySelector('.content').innerHTML=`<div class="app-toolbar"><span id="t">Ход белых</span></div><div id="bd" style="display:grid;grid-template-columns:repeat(8,52px);width:max-content;margin:10px"></div><div id="hist" style="padding:8px;height:120px;overflow:auto"></div>`;
+      const c=w.el.querySelector('.content');
+      const isW=p=>'♔♕♖♗♘♙'.includes(p),isB=p=>'♚♛♜♝♞♟'.includes(p);
+      function val(p){return {'♙':1,'♟':-1,'♘':3,'♞':-3,'♗':3,'♝':-3,'♖':5,'♜':-5,'♕':9,'♛':-9,'♔':100,'♚':-100}[p]||0;}
+      function moves(x,y,board=b){const p=board[y][x]; if(!p)return[]; const out=[]; const own=isW(p)?isW:isB, opp=isW(p)?isB:isW;
+        const add=(nx,ny)=>{if(nx<0||ny<0||nx>7||ny>7)return; const t=board[ny][nx]; if(!t||opp(t))out.push([nx,ny]);};
+        if('♙♟'.includes(p)){const d=p==='♙'?-1:1; if(!board[y+d]?.[x])out.push([x,y+d]); [-1,1].forEach(dx=>{const t=board[y+d]?.[x+dx]; if(t&&opp(t))out.push([x+dx,y+d]);});}
+        if('♖♜'.includes(p)||'♕♛'.includes(p)){[[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{let nx=x+dx,ny=y+dy; while(nx>=0&&ny>=0&&nx<8&&ny<8){const t=board[ny][nx]; if(!t)out.push([nx,ny]); else{if(opp(t))out.push([nx,ny]); break;} nx+=dx; ny+=dy;}});}
+        if('♗♝'.includes(p)||'♕♛'.includes(p)){[[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([dx,dy])=>{let nx=x+dx,ny=y+dy; while(nx>=0&&ny>=0&&nx<8&&ny<8){const t=board[ny][nx]; if(!t)out.push([nx,ny]); else{if(opp(t))out.push([nx,ny]); break;} nx+=dx; ny+=dy;}});}
+        if('♘♞'.includes(p))[[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]].forEach(([dx,dy])=>add(x+dx,y+dy));
+        if('♔♚'.includes(p))for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)if(dx||dy)add(x+dx,y+dy);
+        return out.filter(([nx,ny])=>!own(board[ny][nx]));
+      }
+      function draw(){
+        c.querySelector('#bd').innerHTML=''; for(let y=0;y<8;y++)for(let x=0;x<8;x++){const d=document.createElement('div');d.style.cssText=`width:52px;height:52px;display:grid;place-items:center;font-size:34px;cursor:pointer;background:${(x+y)%2?'#769656':'#eeeed2'}`; if(sel&&sel[0]===x&&sel[1]===y)d.style.outline='3px solid #1e90ff'; const m=sel?moves(sel[0],sel[1]):[]; if(m.some(v=>v[0]===x&&v[1]===y))d.style.boxShadow='inset 0 0 0 3px #ffd700'; d.textContent=b[y][x]; d.onclick=()=>click(x,y); c.querySelector('#bd').appendChild(d);}
+        c.querySelector('#t').textContent=turn==='w'?'Ход белых':'Ход черных';
+      }
+      function click(x,y){
+        const p=b[y][x];
+        if(sel){
+          const m=moves(sel[0],sel[1]); if(m.some(v=>v[0]===x&&v[1]===y)){move(sel[0],sel[1],x,y); sel=null; turn='b'; ai(); draw(); return;}
+        }
+        if(p && ((turn==='w'&&isW(p))||(turn==='b'&&isB(p)))) sel=[x,y]; else sel=null; draw();
+      }
+      function move(x1,y1,x2,y2){const p=b[y1][x1]; b[y2][x2]=p; b[y1][x1]=''; c.querySelector('#hist').innerHTML+=`${p}: ${String.fromCharCode(97+x1)}${8-y1}-${String.fromCharCode(97+x2)}${8-y2}<br>`;}
+      function score(board){let s=0; for(let y=0;y<8;y++)for(let x=0;x<8;x++)s+=val(board[y][x]); return s;}
+      function genMoves(side,board=b){const out=[]; for(let y=0;y<8;y++)for(let x=0;x<8;x++){const p=board[y][x]; if(!p)continue; if((side==='w'&&isW(p))||(side==='b'&&isB(p))) moves(x,y,board).forEach(([nx,ny])=>out.push([x,y,nx,ny]));} return out;}
+      function clone(board){return board.map(r=>r.slice());}
+      function minimax(board,depth,side){
+        if(depth===0) return {v:score(board)};
+        const ms=genMoves(side,board); if(!ms.length)return{v:score(board)};
+        let best={v:side==='w'?-9999:9999,m:null};
+        for(const m of ms){const nb=clone(board); nb[m[3]][m[2]]=nb[m[1]][m[0]]; nb[m[1]][m[0]]=''; const r=minimax(nb,depth-1,side==='w'?'b':'w').v; if((side==='w'&&r>best.v)||(side==='b'&&r<best.v))best={v:r,m};}
+        return best;
+      }
+      function ai(){setTimeout(()=>{const r=minimax(b,2,'b'); if(r.m)move(...r.m); turn='w'; draw();},160);}
+      draw();
+    }
+    function appSolitaire(w){
+      const suits=['♠','♥','♦','♣']; let deck=[],waste=[],found=[[],[],[],[]],tab=[[],[],[],[],[],[],[]],sel=null,start=Date.now(),score=0;
+      function newDeck(){deck=[];suits.forEach(s=>{for(let v=1;v<=13;v++)deck.push({s,v,up:false});}); deck.sort(()=>Math.random()-.5);}
+      function deal(){newDeck(); for(let i=0;i<7;i++)for(let j=0;j<=i;j++){const c=deck.pop(); c.up=j===i; tab[i].push(c);} }
+      function cv(v){return ['A','2','3','4','5','6','7','8','9','10','J','Q','K'][v-1]}
+      function red(s){return s==='♥'||s==='♦'}
+      w.el.querySelector('.content').innerHTML=`<div class="app-toolbar"><button id="n">Новая игра</button><span id="st"></span></div><div id="area" style="padding:10px;background:#0a6a2f;height:100%"></div>`;
+      const c=w.el.querySelector('.content');
+      function draw(){
+        c.querySelector('#st').textContent=`Счёт: ${score} | Время: ${Math.floor((Date.now()-start)/1000)}с`;
+        const a=c.querySelector('#area'); a.innerHTML=`<div style="display:flex;gap:10px;margin-bottom:10px"><div id="stock" style="width:70px;height:96px;border:1px dashed #fff">${deck.length?'🂠':''}</div><div id="waste" style="width:70px;height:96px;border:1px dashed #fff">${waste.at(-1)?cardHTML(waste.at(-1)):''}</div>${found.map((f,i)=>`<div class="fd" data-i="${i}" style="width:70px;height:96px;border:1px dashed #fff">${f.at(-1)?cardHTML(f.at(-1)):''}</div>`).join('')}</div><div style="display:flex;gap:8px;align-items:flex-start">${tab.map((col,i)=>`<div class="col" data-i="${i}" style="width:82px;min-height:320px;border:1px dashed rgba(255,255,255,.4);position:relative">${col.map((ca,j)=>`<div class="ca" data-c="${i}" data-j="${j}" style="position:absolute;top:${j*22}px;width:70px;height:96px;background:${ca.up?'#fff':'#245'};color:${ca.up&&(red(ca.s)?'#d00':'#000')};border:1px solid #333">${ca.up?cv(ca.v)+ca.s:''}</div>`).join('')}</div>`).join('')}</div>`;
+        a.querySelector('#stock').onclick=()=>{if(deck.length){const c=deck.pop(); c.up=true; waste.push(c);} else {deck=waste.reverse().map(x=>({...x,up:false})); waste=[];} draw();};
+        a.querySelector('#waste').onclick=()=>{if(waste.length)sel={from:'waste',card:waste.at(-1)};};
+        a.querySelectorAll('.ca').forEach(d=>d.onclick=()=>{const ci=+d.dataset.c,ji=+d.dataset.j, card=tab[ci][ji]; if(!card.up){card.up=true; score+=5; draw(); return;} sel={from:'tab',ci,ji,card};});
+        a.querySelectorAll('.col').forEach(d=>d.onclick=()=>dropTab(+d.dataset.i));
+        a.querySelectorAll('.fd').forEach(d=>d.onclick=()=>dropFound(+d.dataset.i));
+      }
+      function cardHTML(ca){return `<div style="background:#fff;color:${red(ca.s)?'#d00':'#000'};width:70px;height:96px;border:1px solid #333">${cv(ca.v)+ca.s}</div>`}
+      function dropTab(i){if(!sel)return; const card=sel.card, col=tab[i], top=col.at(-1); const ok= top ? (red(top.s)!==red(card.s)&&top.v===card.v+1) : card.v===13; if(!ok)return;
+        if(sel.from==='waste')waste.pop(); else if(sel.from==='tab'){const move=tab[sel.ci].splice(sel.ji); tab[i].push(...move); sel=null; draw(); return;}
+        col.push(card); score+=10; sel=null; draw();
+      }
+      function dropFound(i){if(!sel)return; const card=sel.card, top=found[i].at(-1); const ok= top ? (top.s===card.s&&top.v+1===card.v) : card.v===1; if(!ok)return;
+        if(sel.from==='waste')waste.pop(); else tab[sel.ci].splice(sel.ji,1); found[i].push(card); score+=15; sel=null; draw(); if(found.reduce((a,b)=>a+b.length,0)===52)win();
+      }
+      function win(){notify('Солитер: победа!');}
+      c.querySelector('#n').onclick=()=>{waste=[];found=[[],[],[],[]];tab=[[],[],[],[],[],[],[]];start=Date.now();score=0;deal();draw();};
+      deal();draw();
+    }
+    function appShark(w){
+      const levels=Array.from({length:10},(_,i)=>i+1); let lvl=state.game.sharkLevel||1,stars=state.game.sharkStars||{},mode='menu';
+      w.el.querySelector('.content').innerHTML=`<div id="shRoot" style="height:100%"></div>`;
+      const c=w.el.querySelector('#shRoot');
+      function menu(){mode='menu';c.innerHTML=`<div style="height:100%;display:grid;place-items:center;background:linear-gradient(#45b4e8,#0d6e9f)"><div style="text-align:center"><h1>🦈 Shark Dash</h1><button id="play">Играть</button></div></div>`; c.querySelector('#play').onclick=map;}
+      function map(){mode='map';c.innerHTML=`<div style="padding:12px;background:#78c8f1;height:100%"><h3>Карта уровней</h3><div id="lv" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px"></div></div>`; const lv=c.querySelector('#lv'); levels.forEach(n=>{const b=document.createElement('button'); b.style.height='70px'; b.textContent=`${n} ${'★'.repeat(stars[n]||0)}`; b.disabled=n>lvl; b.onclick=()=>play(n); lv.appendChild(b);});}
+      function levelData(n){
+        const ducks=Array.from({length:Math.min(1+Math.floor(n/2),5)},(_,i)=>({x:520+i*60,y:260-(i%2)*30,r:18,alive:true}));
+        const blocks=Array.from({length:n},(_,i)=>({x:380+i*34,y:300-(i%3)*30,w:28,h:28,type:['glass','wood','stone'][i%3],hp:[1,2,999][i%3]}));
+        return {ducks,blocks};
+      }
+      function play(n){
+        mode='game';
+        c.innerHTML=`<div style="position:relative;height:100%"><canvas id="cv" width="900" height="540" class="game-canvas"></canvas><button id="pause" style="position:absolute;top:8px;right:8px">Пауза</button></div>`;
+        const cv=c.querySelector('#cv'),ctx=cv.getContext('2d'); const lv=levelData(n);
+        let shark={x:120,y:380,vx:0,vy:0,r:20,launched:false,lives:3,inWater:false},drag=false,mouse={x:0,y:0},paused=false;
+        cv.onmousedown=e=>{const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top; if(Math.hypot(x-shark.x,y-shark.y)<30&&!shark.launched){drag=true;mouse={x,y};}};
+        cv.onmousemove=e=>{if(!drag)return; const r=cv.getBoundingClientRect(); mouse={x:e.clientX-r.left,y:e.clientY-r.top};};
+        cv.onmouseup=()=>{if(drag){drag=false; shark.vx=(shark.x-mouse.x)*0.12; shark.vy=(shark.y-mouse.y)*0.12; shark.launched=true; audio.tone(300,.08,.06,'sawtooth');}};
+        c.querySelector('#pause').onclick=()=>paused=!paused;
+        function hitCircleRect(cx,cy,r,rx,ry,rw,rh){const nx=Math.max(rx,Math.min(cx,rx+rw)),ny=Math.max(ry,Math.min(cy,ry+rh)); return Math.hypot(cx-nx,cy-ny)<r;}
+        function loop(){
+          if(paused){requestAnimationFrame(loop);return;}
+          ctx.fillStyle='#9ed8ff';ctx.fillRect(0,0,900,540);
+          for(let i=0;i<45;i++){ctx.fillStyle='#c7ebff';ctx.fillRect(i*20,0,1,540);}
+          ctx.fillStyle='#61bde6';ctx.fillRect(0,420,900,120);
+          ctx.strokeStyle='#7d4f2b'; ctx.lineWidth=8; ctx.beginPath(); ctx.moveTo(120,380); ctx.lineTo(120,450); ctx.stroke();
+          if(drag){ctx.strokeStyle='#663';ctx.beginPath();ctx.moveTo(120,380);ctx.lineTo(mouse.x,mouse.y);ctx.stroke(); drawTrajectory();}
+          if(shark.launched){shark.vy+=0.25; if(shark.y>420){shark.inWater=true; shark.vy*=0.92; shark.vx*=0.99;} shark.x+=shark.vx; shark.y+=shark.vy; if(shark.x<0||shark.x>900){shark.vx*=-0.8;shark.x=Math.max(0,Math.min(900,shark.x));} if(shark.y<0){shark.vy*=-0.8;shark.y=0;} if(shark.inWater&&Math.random()<0.02){shark.vy-=1.1;}}
+          lv.blocks.forEach(b=>{if(b.hp<=0)return; ctx.fillStyle=b.type==='glass'?'#88ddff':b.type==='wood'?'#a66b36':'#777'; ctx.fillRect(b.x,b.y,b.w,b.h); if(hitCircleRect(shark.x,shark.y,shark.r,b.x,b.y,b.w,b.h)&&shark.launched){const impact=Math.hypot(shark.vx,shark.vy); if(impact>2&&b.hp<900)b.hp--; shark.vx*=-0.7; shark.vy*=-0.7;}});
+          lv.ducks.forEach(d=>{if(!d.alive)return; ctx.fillStyle='#ffd400';ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fill();ctx.fillStyle='#000';ctx.fillRect(d.x+8,d.y-2,5,3); if(Math.hypot(shark.x-d.x,shark.y-d.y)<shark.r+d.r){d.alive=false;audio.tone(720,.05,.05);}});
+          drawShark(ctx,shark.x,shark.y,shark.r);
+          const left=lv.ducks.filter(d=>d.alive).length;
+          ctx.fillStyle='#003';ctx.fillText(`Уровень ${n} · Уточек: ${left} · Акулы: ${shark.lives}`,10,16);
+          if(left===0){const star=shark.lives>=3?3:shark.lives===2?2:1; stars[n]=Math.max(stars[n]||0,star); lvl=Math.max(lvl,n+1); state.game.sharkLevel=lvl; state.game.sharkStars=stars; saveAll(); win(star,n); return;}
+          if(shark.y>560||Math.hypot(shark.vx,shark.vy)<.12&&shark.launched){if(shark.lives>1){shark={x:120,y:380,vx:0,vy:0,r:20,launched:false,lives:shark.lives-1,inWater:false};} else {lose(n); return;}}
+          requestAnimationFrame(loop);
+        }
+        function drawTrajectory(){ctx.setLineDash([4,4]); ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.beginPath(); for(let t=0;t<24;t++){const tx=120+(120-mouse.x)*0.12*t,ty=380+(380-mouse.y)*0.12*t+0.25*t*t*0.5; if(t===0)ctx.moveTo(tx,ty); else ctx.lineTo(tx,ty);} ctx.stroke(); ctx.setLineDash([]);}
+        function win(star,n){c.innerHTML=`<div style="height:100%;display:grid;place-items:center;background:#2a8"><div><h2>Победа!</h2><p>${'★'.repeat(star)}</p><button id="nx">Далее</button></div></div>`; c.querySelector('#nx').onclick=()=>n<10?play(n+1):map();}
+        function lose(n){c.innerHTML=`<div style="height:100%;display:grid;place-items:center;background:#844"><div><h2>Поражение</h2><button id="rp">Повтор</button></div></div>`; c.querySelector('#rp').onclick=()=>play(n);}
+        loop();
+      }
+      menu();
+    }
+    function drawShark(ctx,x,y,r){ctx.fillStyle='#5ec9f5';ctx.beginPath();ctx.ellipse(x,y,r*1.4,r,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.moveTo(x-r*0.2,y-r);ctx.lineTo(x+r*0.6,y-r*1.8);ctx.lineTo(x+r*1.1,y-r*0.7);ctx.closePath();ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x+r*0.5,y-r*0.2,6,0,Math.PI*2);ctx.fill();ctx.fillStyle='#000';ctx.beginPath();ctx.arc(x+r*0.5,y-r*0.2,2,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(x-r*0.2+i*8,y+r*0.4);ctx.lineTo(x+2+i*8,y+r*0.85);ctx.lineTo(x+6+i*8,y+r*0.4);ctx.fill();}}
+    function appVideo(w){w.el.querySelector('.content').innerHTML='<div style="padding:20px"><h2>Видео</h2><p>Офлайн-библиотека пуста. Добавьте файлы через Файловый менеджер.</p></div>';}
+
+    $('#startBtn').onclick=()=>{setScreen('#startScreen')};
+    $('#showDesktop').onclick=()=>{$('#windowLayer').innerHTML=''; $('#tasks').innerHTML=''; state.windows={}; state.tasks={};};
+    $('#notifBtn').onclick=()=>$('#actionCenter').classList.toggle('open');
+    $('#clockBtn').onclick=()=>openApp('calendar',{w:540,h:460});
+    $('#langBtn').onclick=()=>{state.lang=state.lang==='RU'?'EN':'RU'; $('#langBtn').textContent=state.lang; notify('Язык: '+state.lang);};
+    $('#taskSearch').onkeydown=e=>{if(e.key!=='Enter')return;const q=e.target.value.toLowerCase(); const app=Object.keys({calc:1,notepad:1,explorer:1,settings:1,mail:1,calendar:1,weather:1,music:1,photos:1,cortana:1,taskmgr:1,cmd:1,browser:1}).find(k=>q.includes(k)||({'калькулятор':'calc','блокнот':'notepad','параметры':'settings','погода':'weather','почта':'mail','файловый':'explorer','диспетчер':'taskmgr','команд':'cmd','браузер':'browser','кортана':'cortana'})[q]===k); if(app)openApp(app); else notify('Поиск: ничего не найдено');};
+    $('#startSearchBtn').onclick=()=>{setScreen('#desktop');openApp('cortana')};
+    $('#startPowerBtn').onclick=()=>showPowerDialog();
+    function showPowerDialog(){
+      const o=document.createElement('div');o.className='overlay';
+      o.innerHTML=`<div class="dialog"><h3>Завершение работы</h3><button id="sl">Спящий режим</button> <button id="rb">Перезагрузка</button> <button id="off">Выключение</button> <button id="cn">Отмена</button></div>`;
+      $('#modalRoot').appendChild(o);
+      o.querySelector('#cn').onclick=()=>o.remove();
+      o.querySelector('#sl').onclick=()=>{o.remove(); const s=document.createElement('div');s.className='screen';s.style.background='#000';s.style.zIndex='4000';s.innerHTML='<div class="center" style="height:100%">Спящий режим. Клик для возврата</div>';document.body.appendChild(s);s.onclick=()=>s.remove();};
+      o.querySelector('#rb').onclick=()=>{o.remove();boot();};
+      o.querySelector('#off').onclick=()=>{o.remove(); const s=document.createElement('div');s.className='screen';s.style.background='#000';s.style.zIndex='4000';s.innerHTML='<div class="center" style="height:100%;flex-direction:column">Завершение работы...<br><br>Выключен. Нажмите для включения</div>';document.body.appendChild(s);s.onclick=()=>{s.remove();boot();};};
+    }
+    $('#taskSearch').addEventListener('contextmenu',e=>e.preventDefault());
+    document.addEventListener('mousemove',e=>{$('#charms').classList.toggle('open',e.clientX>window.innerWidth-4||((e.clientX>window.innerWidth-20)&&(e.clientY<6||e.clientY>window.innerHeight-6)));});
+    $('#charms').onclick=e=>{if(e.target.tagName!=='BUTTON')return;const c=e.target.dataset.charm; if(c==='start')setScreen('#startScreen'); if(c==='settings')openApp('settings'); if(c==='search')openApp('cortana'); if(c==='devices')notify('Устройства: Экран, Принтер, Bluetooth-адаптер'); if(c==='share')notify('Поделиться контентом');};
+
+    document.addEventListener('keydown',e=>{
+      if(e.key==='Meta'){e.preventDefault(); if(state.screen==='#startScreen')setScreen('#desktop'); else setScreen('#startScreen');}
+      if(e.altKey&&e.key==='F4'&&state.activeWindow)closeWindow(state.activeWindow);
+      if(e.ctrlKey&&e.shiftKey&&e.key==='Escape')openApp('taskmgr');
+      if(e.metaKey&&e.key.toLowerCase()==='d')setScreen('#desktop');
+      if(e.metaKey&&e.key.toLowerCase()==='e'){setScreen('#desktop');openApp('explorer');}
+      if(e.metaKey&&e.key.toLowerCase()==='l')setScreen('#lockScreen');
+      if(e.metaKey&&e.key.toLowerCase()==='r')showRunDialog();
+      if(e.altKey&&e.key==='Tab'){e.preventDefault();const ids=Object.keys(state.windows);if(ids.length){const i=ids.indexOf(state.activeWindow);focusWindow(ids[(i+1)%ids.length]);}}
+    });
+    function showRunDialog(){
+      const o=document.createElement('div');o.className='overlay';o.innerHTML=`<div class="dialog"><h3>Выполнить</h3><input id="rIn" style="width:100%" placeholder="Введите команду"><div style="margin-top:10px"><button id="ok">OK</button><button id="ca">Отмена</button></div></div>`; $('#modalRoot').appendChild(o);
+      o.querySelector('#ca').onclick=()=>o.remove(); o.querySelector('#ok').onclick=()=>{const v=o.querySelector('#rIn').value.trim().toLowerCase(); o.remove(); const map={calc:'calc',notepad:'notepad',cmd:'cmd',explorer:'explorer',settings:'settings',mail:'mail',calendar:'calendar',paint:'paint',taskmgr:'taskmgr',browser:'browser'}; if(map[v]){setScreen('#desktop');openApp(map[v]);} else notify('Команда не найдена');};
+    }
+
+    $('#desktop').addEventListener('contextmenu',e=>{
+      if(e.target.closest('.window')) return;
+      e.preventDefault();
+      const m=$('#tileCtx');m.style.display='block';m.style.left=e.clientX+'px';m.style.top=e.clientY+'px';
+      m.innerHTML='<div data-a="big">Вид: Крупные значки</div><div data-a="mid">Вид: Обычные значки</div><div data-a="small">Вид: Мелкие значки</div><div data-a="name">Сортировка: По имени</div><div data-a="refresh">Обновить</div><div data-a="newf">Создать папку</div><div data-a="newt">Создать txt</div><div data-a="pers">Персонализация</div><div data-a="disp">Параметры экрана</div>';
+      m.querySelectorAll('div').forEach(d=>d.onclick=()=>{
+        const a=d.dataset.a;
+        if(a==='big')$$('.dicon').forEach(x=>x.style.transform='scale(1.15)');
+        if(a==='mid')$$('.dicon').forEach(x=>x.style.transform='scale(1)');
+        if(a==='small')$$('.dicon').forEach(x=>x.style.transform='scale(.85)');
+        if(a==='name')desktopIcons.sort((x,y)=>x[0].localeCompare(y[0])); renderDesktopIcons();
+        if(a==='newf'){fsMkdir('C:\\Users\\User\\Desktop','Новая папка '+Math.floor(Math.random()*99));}
+        if(a==='newt'){fsWrite('C:\\Users\\User\\Desktop','Новый документ '+Math.floor(Math.random()*99)+'.txt','');}
+        if(a==='pers'||a==='disp'){openApp('settings');}
+        m.style.display='none';
+      });
+    });
+    $('#startBtn').addEventListener('contextmenu',e=>{
+      e.preventDefault();
+      const m=$('#tileCtx');m.style.display='block';m.style.left=e.clientX+'px';m.style.top=e.clientY+'px';
+      m.innerHTML='<div data-a="apps">Программы и компоненты</div><div data-a="pwr">Управление питанием</div><div data-a="tm">Диспетчер задач</div><div data-a="cmd">Командная строка</div><div data-a="exp">Файловый менеджер</div><div data-a="sea">Поиск</div><div data-a="run">Выполнить</div><div data-a="desk">Рабочий стол</div><div data-a="off">Выключение</div>';
+      m.querySelectorAll('div').forEach(d=>d.onclick=()=>{const a=d.dataset.a; if(a==='tm')openApp('taskmgr'); if(a==='cmd')openApp('cmd'); if(a==='exp')openApp('explorer'); if(a==='sea')openApp('cortana'); if(a==='run')showRunDialog(); if(a==='desk')setScreen('#desktop'); if(a==='off')showPowerDialog(); m.style.display='none';});
+    });
+
+    function initShellIcons(){
+      $('#startSearchBtn').innerHTML=iconSVG('search',16);
+      $('#startPowerBtn').innerHTML=iconSVG('power',16);
+      $('#startBtn').innerHTML=iconSVG('windows',18,true);
+      $('#volBtn').innerHTML=iconSVG('volume',15);
+      $('#wifiBtn').innerHTML=iconSVG('wifi',15);
+      $('#batteryBtn').innerHTML=iconSVG('battery',15);
+      $('#notifBtn').innerHTML=iconSVG('bell',15);
+      $('#lockBattery').innerHTML=iconSVG('battery',14);
+      $('#lockWifi').innerHTML=iconSVG('wifi',14);
+      $('#lockMail').innerHTML=iconSVG('mail',14);
+      const charmIcons={search:'search',share:'share',start:'home',devices:'devices',settings:'settings'};
+      $$('#charms button').forEach(b=>b.innerHTML=iconSVG(charmIcons[b.dataset.charm],17));
+    }
+    (function pin(){ const p=[['folder','explorer'],['browser','browser'],['store','store']]; $('#pinned').innerHTML=''; p.forEach(([ico,app])=>{const d=document.createElement('div'); d.className='tb-btn'; d.innerHTML=iconSVG(ico,16); d.onclick=()=>openApp(app); $('#pinned').appendChild(d);});})();
+    initShellIcons();
+    initData(); renderStart(); renderNotifs(); boot();
+  </script>
+</body>
+</html>
